@@ -1,16 +1,21 @@
-// src/router/index.js
 import { createRouter, createWebHashHistory } from 'vue-router'
-import MapPage from '../views/MapPage.vue'
+import ConformityMap from '@/views/ConformityMap.vue'
+import PilotMap from '@/views/PilotMap.vue'
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     {
-      path: '/map',
-      name: 'map',
-      component: MapPage
-    }
-  ]
+      path: '/conformity-map',
+      name: 'conformity-map',
+      component: ConformityMap,
+    },
+    {
+      path: '/pilot-map',
+      name: 'pilot-map',
+      component: PilotMap,
+    },
+  ],
 })
 
 export default router

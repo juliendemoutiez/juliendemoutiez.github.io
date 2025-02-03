@@ -312,29 +312,30 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="h-full w-full relative" ref="mapContainer">
-    <BaseLegend :scale="legendScale" position="bottom-right">
+  <div class="h-full w-full relative" ref="mapContainer"></div>
+  <BaseLegend :scale="legendScale" position="bottom-right">
+    <div class="bg-white rounded-xl shadow-lg p-6">
       <p class="font-bold text-2xl text-slate-800 mb-4">Groupe pilote</p>
       <div class="space-y-2">
         <div class="flex flex-row items-center">
           <div class="w-4 flex items-center justify-center mr-3">
             <div class="w-2 h-2 rounded-full bg-blue-500/70 ring-4 ring-blue-500"></div>
           </div>
-          <p class="text-base text-slate-500">Commune</p>
+          <p class="text-base text-slate-500">Collectivité pilote</p>
         </div>
         <div class="flex flex-row items-center">
           <div class="w-4 flex items-center justify-center mr-3">
             <div class="w-4 h-4 rounded-md bg-green-500/30 ring-2 ring-green-500"></div>
           </div>
-          <p class="text-base text-slate-500">Département couvert par un OPSN ProConnecté</p>
+          <p class="text-base text-slate-500">OPSN pilote ProConnecté</p>
         </div>
         <div class="flex flex-row items-center">
           <div class="w-4 flex items-center justify-center mr-3">
             <div class="w-4 h-4 rounded-md bg-yellow-500/30 ring-2 ring-yellow-500"></div>
           </div>
-          <p class="text-base text-slate-500">Département non couvert par un OPSN ProConnecté</p>
+          <p class="text-base text-slate-500">OPSN pilote</p>
         </div>
       </div>
-    </BaseLegend>
-  </div>
+    </div>
+  </BaseLegend>
 </template>

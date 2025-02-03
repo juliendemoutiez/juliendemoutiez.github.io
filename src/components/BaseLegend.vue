@@ -1,6 +1,6 @@
 <template>
-  <div class="absolute bg-white rounded-xl shadow-lg p-6" :class="positionClass" v-if="scale"
-    :style="{ transform: `scale(${scale})`, zIndex: 1000, transformOrigin: 'bottom right' }">
+  <div class="absolute" :class="positionClass" v-if="scale"
+    :style="{ transform: `scale(${scale})`, zIndex: 1000, width: '350px' }">
     <slot></slot>
   </div>
 </template>
@@ -21,11 +21,11 @@ export default {
   computed: {
     positionClass() {
       const positions = {
-        'bottom-right': 'bottom-4 right-4',
-        'bottom-left': 'bottom-4 left-4'
+        'bottom-right': 'bottom-4 right-4 origin-bottom-right',
+        'bottom-left': 'bottom-4 left-4 origin-bottom-left'
       };
       return positions[this.position];
-    }
+    },
   }
 }
 </script>
