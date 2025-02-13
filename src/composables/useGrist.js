@@ -32,6 +32,18 @@ export const useGrist = (config = { tokenRefreshInterval: 14 * 60 * 1000 }) => {
     return data.records
   }
 
+  const executeGetRequest = async (endpoint) => {
+    if (!gristTokenInfo.value) throw new Error('Token not initialized')
+
+    const response = await fetch(
+      `${gristTokenInfo.value.baseUrl}${endpoint}?auth=${gristTokenInfo.value.token}`,
+    )
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    return response.json()
+  }
+
   const fetchAttachment = async (attachmentId) => {
     if (!gristTokenInfo.value) throw new Error('Token not initialized')
 
@@ -80,6 +92,7 @@ export const useGrist = (config = { tokenRefreshInterval: 14 * 60 * 1000 }) => {
   return {
     gristTokenInfo,
     executeQuery,
+    executeGetRequest,
     fetchAttachment,
     setupSubscriptions,
     initializeGrist,

@@ -1,3 +1,130 @@
+<template>
+  <div class="h-full w-full relative" ref="mapContainer"></div>
+  <BaseLegend :scale="legendScale" position="bottom-left">
+    <div class="bg-white rounded-xl shadow-lg p-6">
+      <div v-if="selectedAreas[currentLevel]">
+        <div v-if="Object.values(selectedAreas).length > 1" class="flex items-center mb-2">
+          <a v-if="currentLevel === 'region'" @click="selectLevel('country', '00')" class="cursor-pointer">
+            <p class="text-base text-slate-500 hover:text-slate-800 flex flex-row items-center">
+              <Undo2 class="mr-2" />
+              France
+            </p>
+          </a>
+          <a v-if="currentLevel === 'department'"
+            @click="selectLevel('region', selectedAreas['region'].Code_INSEE_geographique)" class="cursor-pointer">
+            <p class="text-base text-slate-500 hover:text-slate-800 flex flex-row items-center text-ellipsis">
+              <Undo2 class="mr-2" />
+              {{ selectedAreas['region'].Libelle }}
+            </p>
+          </a>
+        </div>
+        <p class="font-bold text-3xl text-slate-800 mb-2">{{ selectedAreas[currentLevel].Libelle }}</p>
+        <p class="text-lg text-slate-500 mb-4">{{ formatNumber(selectedAreas[currentLevel].Nombre_de_communes) }}
+          communes
+        </p>
+        <div class="space-y-4">
+          <div v-for="score in ['3', '2', '1', '0']" :key="score" class="relative">
+            <div class="flex justify-between text-sm text-slate-600 mb-1">
+              <span>
+                {{ formatNumber(selectedAreas[currentLevel].Communes_par_score[period][score]) }}
+                ({{ Math.round(selectedAreas[currentLevel].Communes_par_score[period][score] /
+                  selectedAreas[currentLevel].Nombre_de_communes * 100) }}%)
+              </span>
+            </div>
+            <div class="h-3 bg-slate-200 rounded-full w-full">
+              <transition name="bar" appear>
+                <div class="h-full rounded-full transition-[width] duration-1000 ease-ease" :style="{
+                  width: dataIsLoaded ? `${(Math.round(selectedAreas[currentLevel].Communes_par_score[period][score] / selectedAreas[currentLevel].Nombre_de_communes * 100))}%` : '0%',
+                  backgroundColor: getColor(parseInt(score))
+                }">
+                </div>
+              </transition>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else>
+        <div class="animate-pulse">
+          <div v-if="currentLevel !== 'country'" class="h-5 bg-slate-100 rounded w-1/2 mb-4"></div>
+          <div class="h-12 bg-slate-100 rounded w-3/4 mb-4" :class="{ 'h-16': currentLevel !== 'country' }"></div>
+          <div class="h-5 bg-slate-100 rounded w-1/2 mb-4"></div>
+          <div class="space-y-4">
+            <div v-for="i in 4" :key="i">
+              <div class="h-4 bg-slate-100 rounded-full w-1/5 mb-1"></div>
+              <div class="h-4 bg-slate-100 rounded-full w-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 bg-white rounded-xl p-6 text-slate-500 hover:text-slate-800" v-if="currentLevel == 'department'">
+      <div v-if="selectedAreas['city']">
+        <p class="font-bold text-2xl text-slate-800 mb-2">{{ selectedAreas['city'].NOM }}</p>
+        <div>
+          <div class="flex items-center mb-1">
+            <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center"
+              :style="{ backgroundColor: getColor(selectedAreas['city'].score_components[period].indexOf('TLD OK') < 0 ? 0 : 3) }">
+              <span class="text-white leading-3">{{ selectedAreas['city'].score_components[period].indexOf('TLD OK') < 0
+                ? '×' : '✓' }}</span>
+              </span>
+              <span class="text-slate-800">Domaine et extension conformes</span>
+          </div>
+          <div class="flex items-center mb-1">
+            <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center"
+              :style="{ backgroundColor: getColor(selectedAreas['city'].score_components[period].indexOf('PROP') < 0 ? 0 : 3) }">
+              <span class="text-white leading-3">{{ selectedAreas['city'].score_components[period].indexOf('PROP') < 0
+                ? '×' : '✓' }}</span>
+              </span>
+              <span class="text-slate-800">Propriété du domaine</span>
+          </div>
+          <div class="flex items-center mb-1">
+            <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center"
+              :style="{ backgroundColor: getColor(selectedAreas['city'].score_components[period].indexOf('HTTPS') < 0 ? 0 : 3) }">
+              <span class="text-white leading-3">{{ selectedAreas['city'].score_components[period].indexOf('HTTPS') < 0
+                ? '×' : '✓' }}</span>
+              </span>
+              <span class="text-slate-800">Site web conforme (HTTPS)</span>
+          </div>
+          <div class="flex items-center mb-1">
+            <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center"
+              :style="{ backgroundColor: getColor(selectedAreas['city'].score_components[period].indexOf('MAIL OK') < 0 ? 0 : 3) }">
+              <span class="text-white leading-3">{{ selectedAreas['city'].score_components[period].indexOf('MAIL OK')
+                < 0 ? '×' : '✓' }}</span>
+              </span>
+              <span class="text-slate-800">Messagerie conforme</span>
+          </div>
+          <p class="text-slate-800 mt-6 mb-2 font-medium">Mettre à jour les données</p>
+          <a :href="`${selectedAreas['city'].public_service_link}/demande-de-mise-a-jour`"
+            class="flex bg-slate-100 rounded-md p-2 hover:bg-slate-100" target="_blank">
+            <SquareArrowOutUpRight class="mr-2 w-5 text-slate-500" />
+            <span class="text-slate-500 truncate">Annuaire Service Public - {{ selectedAreas['city'].NOM }}</span>
+          </a>
+        </div>
+      </div>
+      <div v-else>
+        <p class="text-slate-500">Cliquez sur une commune pour afficher les détails</p>
+      </div>
+    </div>
+    <div class="mt-4 bg-white rounded-xl shadow-lg p-6 text-slate-500 hover:text-slate-800">
+      <div class="flex flex-row items-center justify-between mb-4">
+        <p class="font-medium text-slate-800 mr-2">Données</p>
+        <select v-model="period" class="bg-slate-100 rounded-md p-2 text-slate-800 px-2">
+          <option value="t0">Historique</option>
+          <option value="t1">Q1 2025</option>
+        </select>
+      </div>
+      <div @click="showInfo = true" class="cursor-pointer">
+        <p class="text-base flex flex-row items-center">
+          <Info class="mr-4" />
+          En savoir plus sur cette carte
+        </p>
+      </div>
+    </div>
+  </BaseLegend>
+  <ConformityModal :show="showInfo" @close="showInfo = false" />
+</template>
+
 <script setup>
 import { ref, watch, onMounted } from 'vue';
 import L from 'leaflet';
@@ -7,8 +134,9 @@ import { useGrist } from '@/composables/useGrist';
 import { useBaseMap } from '@/composables/useBaseMap';
 import BaseLegend from '@/components/BaseLegend.vue';
 import ConformityModal from '@/components/ConformityModal.vue';
+import { formatNumber } from '@/utils/numberFormat'
 
-// Configuration
+// Constants
 const CONFIG = {
   mapSettings: {
     defaultViewCoords: [46.603354, 1.888334],
@@ -23,12 +151,11 @@ const CONFIG = {
   }
 };
 
-// Create color scale
 const colorScale = d3.scaleLinear()
   .domain(CONFIG.colors.domain)
   .range(CONFIG.colors.range);
 
-// State
+// Refs
 const currentLevel = ref('country');
 const dataIsLoaded = ref(false);
 const mainLayer = ref(null);
@@ -36,11 +163,11 @@ const period = ref('t1');
 const selectedAreas = ref({});
 const showInfo = ref(false);
 
-// Composables
+// Initialise composables
 const { executeQuery, fetchAttachment, initializeGrist } = useGrist();
 const { map, mapContainer, legendScale, initializeMap } = useBaseMap(CONFIG.mapSettings);
 
-// SQL Queries
+// Methods
 const getAreaQuery = (parentCode) => {
   const query = `SELECT Code_INSEE_geographique, Libelle, Nombre_de_communes, 
                  Communes_par_score, geoJSON_regions, geoJSON_departements, 
@@ -68,7 +195,6 @@ const getChildrenQuery = (parentCode) => {
   };
 };
 
-// Methods
 const loadSelectedArea = async (parentCode) => {
   try {
     const { query, args } = getAreaQuery(parentCode);
@@ -135,6 +261,8 @@ const renderGeography = async () => {
   if (!selectedAreas.value?.[currentLevel.value]) return;
 
   try {
+    dataIsLoaded.value = false;
+
     if (mainLayer.value) {
       map.value.removeLayer(mainLayer.value);
     }
@@ -265,11 +393,7 @@ const getColor = (score) => {
   return score === null ? CONFIG.colors.defaultColor : colorScale(score);
 };
 
-const formatNumber = (value) => {
-  return new Intl.NumberFormat('fr-FR').format(value);
-};
-
-// Watch for period changes
+// Watches
 watch(period, () => {
   if (!mainLayer.value) return;
 
@@ -279,152 +403,14 @@ watch(period, () => {
   });
 });
 
-// Lifecycle
+// Lifecycle hooks
 onMounted(async () => {
   try {
-    // Initialize Grist and get token
     await initializeGrist();
-
-    // Initialize the map and layers
     await initializeMap();
-
-    // Load map data
     await loadAndRenderLevel('00');
   } catch (err) {
     console.error('Component initialization failed:', err);
   }
 });
 </script>
-
-<template>
-  <div class="h-full w-full relative" ref="mapContainer"></div>
-  <BaseLegend :scale="legendScale" position="bottom-left">
-    <div class="bg-white rounded-xl shadow-lg p-6">
-      <div v-if="selectedAreas[currentLevel]">
-        <div v-if="Object.values(selectedAreas).length > 1" class="flex items-center mb-2">
-          <a v-if="currentLevel === 'region'" @click="selectLevel('country', '00')" class="cursor-pointer">
-            <p class="text-base text-slate-500 hover:text-slate-800 flex flex-row items-center">
-              <Undo2 class="mr-2" />
-              France
-            </p>
-          </a>
-          <a v-if="currentLevel === 'department'"
-            @click="selectLevel('region', selectedAreas['region'].Code_INSEE_geographique)" class="cursor-pointer">
-            <p class="text-base text-slate-500 hover:text-slate-800 flex flex-row items-center text-ellipsis">
-              <Undo2 class="mr-2" />
-              {{ selectedAreas['region'].Libelle }}
-            </p>
-          </a>
-        </div>
-        <p class="font-bold text-3xl text-slate-800 mb-2">{{ selectedAreas[currentLevel].Libelle }}</p>
-        <p class="text-lg text-slate-500 mb-4">{{ formatNumber(selectedAreas[currentLevel].Nombre_de_communes) }}
-          communes
-        </p>
-        <div class="space-y-4">
-          <div v-for="score in ['3', '2', '1', '0']" :key="score" class="relative">
-            <div class="flex justify-between text-sm text-slate-600 mb-1">
-              <span>
-                {{ formatNumber(selectedAreas[currentLevel].Communes_par_score[period][score]) }}
-                ({{ Math.round(selectedAreas[currentLevel].Communes_par_score[period][score] /
-                  selectedAreas[currentLevel].Nombre_de_communes * 100) }}%)
-              </span>
-            </div>
-            <div class="h-3 bg-slate-200 rounded-full w-full">
-              <transition name="bar" appear>
-                <div class="h-full rounded-full bar-chart-bar" :style="{
-                  width: dataIsLoaded ? `${(Math.round(selectedAreas[currentLevel].Communes_par_score[period][score] / selectedAreas[currentLevel].Nombre_de_communes * 100))}%` : '0%',
-                  backgroundColor: getColor(parseInt(score))
-                }">
-                </div>
-              </transition>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div v-else>
-        <div class="animate-pulse">
-          <div v-if="currentLevel !== 'country'" class="h-5 bg-slate-100 rounded w-1/2 mb-4"></div>
-          <div class="h-12 bg-slate-100 rounded w-3/4 mb-4" :class="{ 'h-16': currentLevel !== 'country' }"></div>
-          <div class="h-5 bg-slate-100 rounded w-1/2 mb-4"></div>
-          <div class="space-y-4">
-            <div v-for="i in 4" :key="i">
-              <div class="h-4 bg-slate-100 rounded-full w-1/5 mb-1"></div>
-              <div class="h-4 bg-slate-100 rounded-full w-full"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="mt-4 bg-white rounded-xl p-6 text-slate-500 hover:text-slate-800" v-if="currentLevel == 'department'">
-      <div v-if="selectedAreas['city']">
-        <p class="font-bold text-2xl text-slate-800 mb-2">{{ selectedAreas['city'].NOM }}</p>
-        <div>
-          <div class="flex items-center mb-1">
-            <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center"
-              :style="{ backgroundColor: getColor(selectedAreas['city'].score_components[period].indexOf('TLD OK') < 0 ? 0 : 3) }">
-              <span class="text-white leading-3">{{ selectedAreas['city'].score_components[period].indexOf('TLD OK') < 0
-                ? '×' : '✓' }}</span>
-              </span>
-              <span class="text-slate-800">Domaine et extension conformes</span>
-          </div>
-          <div class="flex items-center mb-1">
-            <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center"
-              :style="{ backgroundColor: getColor(selectedAreas['city'].score_components[period].indexOf('PROP') < 0 ? 0 : 3) }">
-              <span class="text-white leading-3">{{ selectedAreas['city'].score_components[period].indexOf('PROP') < 0
-                ? '×' : '✓' }}</span>
-              </span>
-              <span class="text-slate-800">Propriété du domaine</span>
-          </div>
-          <div class="flex items-center mb-1">
-            <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center"
-              :style="{ backgroundColor: getColor(selectedAreas['city'].score_components[period].indexOf('HTTPS') < 0 ? 0 : 3) }">
-              <span class="text-white leading-3">{{ selectedAreas['city'].score_components[period].indexOf('HTTPS') < 0
-                ? '×' : '✓' }}</span>
-              </span>
-              <span class="text-slate-800">Site web conforme (HTTPS)</span>
-          </div>
-          <div class="flex items-center mb-1">
-            <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center"
-              :style="{ backgroundColor: getColor(selectedAreas['city'].score_components[period].indexOf('MAIL OK') < 0 ? 0 : 3) }">
-              <span class="text-white leading-3">{{ selectedAreas['city'].score_components[period].indexOf('MAIL OK')
-                < 0 ? '×' : '✓' }}</span>
-              </span>
-              <span class="text-slate-800">Messagerie conforme</span>
-          </div>
-          <p class="text-slate-800 mt-6 mb-2 font-medium">Mettre à jour les données</p>
-          <a :href="`${selectedAreas['city'].public_service_link}/demande-de-mise-a-jour`"
-            class="flex bg-slate-100 rounded-md p-2 hover:bg-slate-100" target="_blank">
-            <SquareArrowOutUpRight class="mr-2 w-5 text-slate-500" />
-            <span class="text-slate-500 truncate">Annuaire Service Public - {{ selectedAreas['city'].NOM }}</span>
-          </a>
-        </div>
-      </div>
-      <div v-else>
-        <p class="text-slate-500">Cliquez sur une commune pour afficher les détails</p>
-      </div>
-    </div>
-    <div class="mt-4 bg-white rounded-xl shadow-lg p-6 text-slate-500 hover:text-slate-800">
-      <div class="flex flex-row items-center justify-between mb-4">
-        <p class="font-medium text-slate-800 mr-2">Données</p>
-        <select v-model="period" class="bg-slate-100 rounded-md p-2 text-slate-800 px-2">
-          <option value="t0">Historique</option>
-          <option value="t1">Q1 2025</option>
-        </select>
-      </div>
-      <div @click="showInfo = true" class="cursor-pointer">
-        <p class="text-base flex flex-row items-center">
-          <Info class="mr-4" />
-          En savoir plus sur cette carte
-        </p>
-      </div>
-    </div>
-  </BaseLegend>
-  <ConformityModal :show="showInfo" @close="showInfo = false" />
-</template>
-
-<style>
-.bar-chart-bar {
-  transition: width 1s ease;
-}
-</style>

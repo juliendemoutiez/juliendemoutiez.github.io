@@ -1,24 +1,3 @@
-<script setup>
-import { X } from 'lucide-vue-next';
-
-const props = defineProps({
-  show: {
-    type: Boolean,
-    required: true
-  }
-});
-
-const emit = defineEmits(['close']);
-
-// Handle click outside
-const handleClickOutside = (e) => {
-  if (e.target.classList.contains('modal-overlay')) {
-    emit('close');
-  }
-};
-
-</script>
-
 <template>
   <div v-if="show"
     class="h-full w-full bg-slate-800/[.55] cursor-pointer fixed modal-overlay flex items-center justify-center"
@@ -102,6 +81,27 @@ const handleClickOutside = (e) => {
     </div>
   </div>
 </template>
+
+<script setup>
+import { X } from 'lucide-vue-next';
+
+const props = defineProps({
+  show: {
+    type: Boolean,
+    required: true
+  }
+});
+
+const emit = defineEmits(['close']);
+
+// Handle click outside
+const handleClickOutside = (e) => {
+  if (e.target.classList.contains('modal-overlay')) {
+    emit('close');
+  }
+};
+
+</script>
 
 <style scoped>
 .modal-overlay {
