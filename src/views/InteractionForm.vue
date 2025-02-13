@@ -20,21 +20,24 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
           <div class="col-span-1">
             <p class="form-header">Qui ?</p>
-            <p class="form-subheader">Renseignez le ou les contacts présents pendant l’échange. Les contacts doivent préalablement avoir été créés dans la table "Contacts"</p>
-            <p class="form-subheader">Les contacts internes sont les membres de l’Incubateur ayant participé à l’échange</p>
+            <p class="form-subheader">Renseignez le ou les contacts présents pendant l’échange. Les contacts doivent
+              préalablement avoir été créés dans la table "Contacts"</p>
+            <p class="form-subheader">Les contacts internes sont les membres de l’Incubateur ayant participé à l’échange
+            </p>
           </div>
           <div class="col-span-1 sm:col-span-2">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="col-span-1 sm:col-span-2">
                 <label class="form-label" for="contacts">Contact(s) *</label>
-                <MultiselectDropdown id="contacts" v-model:selected="formData.contacts" :fetchSuggestions="fetchContacts"
-                displayField="Nom_Orga_Coll" :required="formData.contacts.length === 0" />
+                <MultiselectDropdown id="contacts" v-model:selected="formData.contacts"
+                  :fetchSuggestions="fetchContacts" displayField="Nom_Orga_Coll"
+                  :required="formData.contacts.length === 0" />
               </div>
               <div class="col-span-1 sm:col-span-2">
                 <label class="form-label" for="internalContacts">Contact(s) interne(s) *</label>
                 <MultiselectDropdown id="internalContacts" v-model:selected="formData.internalContacts"
-              :fetchSuggestions="fetchInternalContacts" displayField="Nom_complet"
-              :required="formData.internalContacts.length === 0" />
+                  :fetchSuggestions="fetchInternalContacts" displayField="Nom_complet"
+                  :required="formData.internalContacts.length === 0" />
               </div>
             </div>
           </div>
@@ -42,19 +45,21 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
           <div class="col-span-1">
             <p class="form-header">Quoi ?</p>
-            <p class="form-subheader">Sélectionnez le(s) type(s) d'interaction et le(s) projet(s) dans lequel celle-ci s'inscrit</p>
+            <p class="form-subheader">Sélectionnez le(s) type(s) d'interaction et le(s) projet(s) dans lequel celle-ci
+              s'inscrit</p>
           </div>
           <div class="col-span-1 sm:col-span-2">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="col-span-1 sm:col-span-2">
                 <label class="form-label" for="types">Type(s) *</label>
                 <MultiselectDropdown id="types" v-model:selected="formData.types" :options="formOptions.types"
-                :required="formData.types.length === 0" />
+                  :required="formData.types.length === 0" />
               </div>
               <div class="col-span-1 sm:col-span-2">
                 <label class="form-label" for="projects">Projet(s) *</label>
-                <MultiselectDropdown id="projects" v-model:selected="formData.projects" :fetchSuggestions="fetchProjects"
-                displayField="Nom_complet" :required="formData.projects.length === 0" />
+                <MultiselectDropdown id="projects" v-model:selected="formData.projects"
+                  :fetchSuggestions="fetchProjects" displayField="Nom_complet"
+                  :required="formData.projects.length === 0" />
               </div>
             </div>
           </div>
@@ -62,13 +67,14 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
           <div class="col-span-1">
             <p class="form-header">Notes</p>
-            <p class="form-subheader">Insérez ici vos notes de l’échange et/ou copiez-collez le lien vers le document pad/Docs de prise de notes</p>
+            <p class="form-subheader">Insérez ici vos notes de l’échange et/ou copiez-collez le lien vers le document
+              pad/Docs de prise de notes</p>
           </div>
           <div class="col-span-1 sm:col-span-2">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="col-span-1 sm:col-span-2">
                 <textarea id="notes" style="height: 200px" v-model="formData.notes" type="text"
-                placeholder="Notes..."></textarea>
+                  placeholder="Notes..."></textarea>
               </div>
             </div>
           </div>
@@ -114,6 +120,7 @@ const QUERIES = {
       SELECT id, ${selectedFields}
       FROM ${tableName}
       WHERE ${whereConditions}
+      ORDER BY ${nameField}
       LIMIT 10
     `;
   }
@@ -141,7 +148,7 @@ const handleSubmit = async () => {
       'Projets': ['L'].concat(formData.value.projects.map(e => e.id)),
       'Type': ['L'].concat(formData.value.types),
       'Contacts': ['L'].concat(formData.value.contacts.map(e => e.id)),
-      'Contacts_internes': ['L'].concat(formData.value.internalContacts.map(e => e.id)),
+      'Contact_s_interne_s_': ['L'].concat(formData.value.internalContacts.map(e => e.id)),
       'Notes': formData.value.notes,
     }
 
@@ -151,7 +158,7 @@ const handleSubmit = async () => {
     initForm()
     showSuccess('L\interaction a été créée avec succès.')
   } catch (error) {
-    console.error('Error creating interaction:', error)
+    console.error(error)
     showError('Une erreur s\'est produite lors de la création de l\'interaction.')
   } finally {
     isSubmitting.value = false
@@ -195,7 +202,7 @@ const fetchSuggestions = (type) => {
   return async (query) => {
     try {
       let records = await executeQuery(QUERIES.suggestions(type, query))
-      if (type ==='project') {
+      if (type === 'project') {
         const userProjects = currentUser.value.Pages_privees.split(',')
         records = [
           ...records.filter(record => userProjects.some(name => record.fields.Nom_complet.includes(name))).sort(),

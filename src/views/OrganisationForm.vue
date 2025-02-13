@@ -27,21 +27,23 @@
               </div>
               <div class="col-span-2">
                 <label class="form-label" for="statuses">Statut juridique *</label>
-                <MultiselectDropdown id="statuses" v-model:selected="formData.legalStatuses" :options="formOptions.statuses"
-                  :required="formData.legalStatuses.length === 0"
+                <MultiselectDropdown id="statuses" v-model:selected="formData.legalStatuses"
+                  :options="formOptions.statuses" :required="formData.legalStatuses.length === 0"
                   customValidity="Veuillez sélectionner au moins un statut juridique" />
               </div>
               <div class="col-span-2">
                 <label class="form-label" for="website">Site web *</label>
-                <input id="website" v-model="formData.website" placeholder="https://www.eurenormandienumerique.fr/" type="url"
-                  required />
+                <input id="website" v-model="formData.website" placeholder="https://www.eurenormandienumerique.fr/"
+                  type="url" required />
               </div>
             </div>
           </div>
           <div class="col-span-1">
             <p class="form-header">Couverture</p>
-            <p class="form-subheader">Quelle est le périmètre géographique de la structure ? (Préfecture, Centre de Gestion...)</p>
-            <p class="form-subheader">Pour un OPSN : de quel(s) département(s) est/sont issues les collectivités adhérentes à cet OPSN ?</p>
+            <p class="form-subheader">Quelle est le périmètre géographique de la structure ? (Préfecture, Centre de
+              Gestion...)</p>
+            <p class="form-subheader">Pour un OPSN : de quel(s) département(s) est/sont issues les collectivités
+              adhérentes à cet OPSN ?</p>
           </div>
           <div class="col-span-2">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -96,6 +98,7 @@ const QUERIES = {
       SELECT id, ${nameField}
       FROM ${tableName}
       WHERE ${whereConditions}
+      ORDER BY ${nameField}
       LIMIT 10
     `;
   },
@@ -125,7 +128,7 @@ const handleSubmit = async () => {
       'Sigle': formData.value.acronym,
       'Statut_juridique': ['L'].concat(formData.value.legalStatuses),
       'Site_web': formData.value.website.toLowerCase(),
-      'Couverture': ['L'].concat(formData.value.communities.map(e => e.fields.id)),
+      'Couverture': ['L'].concat(formData.value.communities.map(e => e.id)),
     }
 
     const actions = [['AddRecord', 'ORGANISATIONS', undefined, outputData]]
@@ -133,7 +136,8 @@ const handleSubmit = async () => {
 
     initForm()
     showSuccess('L\'organisation a été créé avec succès.')
-  } catch {
+  } catch (error) {
+    console.error(error)
     showError('Une erreur s\'est produite lors de la création de l\'organisation.')
   } finally {
     isSubmitting.value = false

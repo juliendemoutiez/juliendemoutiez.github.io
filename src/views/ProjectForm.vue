@@ -59,7 +59,7 @@
               </div>
               <div class="col-span-1">
                 <label class="form-label" for="end_date">Date de fin</label>
-                <input id="end_date" v-model="formData.end_date" type="date" />
+                <input id="end_date" v-model="formData.end_date" type="date" :min="formData.start_date" />
               </div>
             </div>
           </div>
@@ -123,6 +123,7 @@ const QUERIES = {
       SELECT id, ${nameField}
       FROM ${tableName}
       WHERE ${whereConditions}
+      ORDER BY ${nameField}
       LIMIT 10
     `;
   }
@@ -164,7 +165,8 @@ const handleSubmit = async () => {
 
     initForm()
     showSuccess('Le projet a été créé avec succès.')
-  } catch {
+  } catch (error) {
+    console.error(error)
     showError('Une erreur s\'est produite lors de la création du projet.')
   } finally {
     isSubmitting.value = false

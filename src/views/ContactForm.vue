@@ -38,8 +38,8 @@
               </div>
               <div class="col-span-1">
                 <label class="form-label" for="email2">Email 2</label>
-                <input v-model="formData.email2" type="email" id="email2" onInput="this.value = this.value.toLowerCase()"
-                  placeholder="jean@dupont.fr" />
+                <input v-model="formData.email2" type="email" id="email2"
+                  onInput="this.value = this.value.toLowerCase()" placeholder="jean@dupont.fr" />
               </div>
               <div class="col-span-1">
                 <label class="form-label" for="phone">Téléphone</label>
@@ -47,7 +47,7 @@
                   <select class="w-24 mr-2" v-model="formData.phone_indicator" id="phone_indicator" required>
                     <option v-for="(indicator, index) of PHONE_INDICATORS" :key="index" :value="indicator.value">{{
                       indicator.value
-                      }}</option>
+                    }}</option>
                   </select>
                   <input v-model="formData.phone" type="tel"
                     :pattern="formData.phone_indicator.length === 3 ? PHONE_PATTERNS.metropolitan.pattern : PHONE_PATTERNS.overseas.pattern"
@@ -62,7 +62,7 @@
                   <select class="w-24 mr-2" v-model="formData.phone2_indicator" id="phone2_indicator" required>
                     <option v-for="(indicator, index) of PHONE_INDICATORS" :key="index" :value="indicator.value">{{
                       indicator.value
-                      }}</option>
+                    }}</option>
                   </select>
                   <input v-model="formData.phone2" type="tel"
                     :pattern="formData.phone2_indicator.length === 3 ? '[0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2}' : '[0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2}'"
@@ -74,7 +74,8 @@
           </div>
           <div class="col-span-1">
             <p class="form-header">Informations professionnelles</p>
-            <p class="form-subheader">Le contact doit être rattaché à une collectivité ou une organisation (ou les deux)</p>
+            <p class="form-subheader">Le contact doit être rattaché à une collectivité ou une organisation (ou les deux)
+            </p>
           </div>
           <div class="col-span-1 sm:col-span-2">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -92,7 +93,7 @@
               <div class="col-span-1">
                 <label class="form-label" for="organisations">Organisations *</label>
                 <MultiselectDropdown id="organisations" v-model:selected="formData.organisations"
-                :fetchSuggestions="fetchOrganisations" displayField="Nom_sigle" :required="false" />
+                  :fetchSuggestions="fetchOrganisations" displayField="Nom_sigle" :required="false" />
               </div>
             </div>
           </div>
@@ -139,6 +140,7 @@ const QUERIES = {
       SELECT id, ${nameField}
       FROM ${tableName}
       WHERE ${whereConditions}
+      ORDER BY ${nameField}
       LIMIT 10
     `
   }
@@ -175,8 +177,8 @@ const handleSubmit = async () => {
       'Email_2': formData.value.email2,
       'Telephone': formatPhone(formData.value.phone_indicator, formData.value.phone),
       'Telephone_2': formatPhone(formData.value.phone2_indicator, formData.value.phone2),
-      'Collectivites': ['L'].concat(formData.value.communities.map(e => e.fields.id)),
-      'Organisations': ['L'].concat(formData.value.organisations.map(e => e.fields.id)),
+      'Collectivites': ['L'].concat(formData.value.communities.map(e => e.id)),
+      'Organisations': ['L'].concat(formData.value.organisations.map(e => e.id)),
     }
 
     const actions = [['AddRecord', 'CONTACTS', undefined, outputData]]
@@ -184,7 +186,8 @@ const handleSubmit = async () => {
 
     initForm()
     showSuccess('Le contact a été créé avec succès.')
-  } catch {
+  } catch (error) {
+    console.error(error);
     showError('Une erreur s\'est produite lors de la création du contact.')
   } finally {
     isSubmitting.value = false
@@ -237,7 +240,8 @@ const fetchSuggestions = (type) => {
   return async (query) => {
     try {
       const records = await executeQuery(QUERIES.suggestions(type, query))
-      return records.map(record => record.fields)
+      const sortKey = type === 'community' ? 'Libelle_et_departement' : 'Nom_sigle'
+      return records.map(record => record.fields).sort((a, b) => a[sortKey].localeCompare(b[sortKey]))
     } catch (error) {
       console.error('Search error:', error)
     }

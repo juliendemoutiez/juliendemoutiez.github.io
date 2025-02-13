@@ -149,6 +149,9 @@ watch(
 const availableSuggestions = computed(() => {
   return suggestions.value.filter((suggestion) => {
     return !props.selected.some((selected) => {
+      if (props.options) {
+        return selected === suggestion
+      }
       return selected.id === suggestion.id
     })
   })
