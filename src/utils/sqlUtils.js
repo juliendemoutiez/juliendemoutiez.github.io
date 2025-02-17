@@ -1,0 +1,25 @@
+export const replaceAccents = (
+  str,
+) => `REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+  REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+  LOWER(${str}),
+  'é', 'e'),
+  'è', 'e'),
+  'ê', 'e'),
+  'ë', 'e'),
+  'à', 'a'),
+  'á', 'a'),
+  'â', 'a'),
+  'ä', 'a'),
+  'ç', 'c'),
+  'î', 'i'),
+  'ï', 'i'),
+  'ô', 'o'),
+  'ö', 'o'),
+  'ù', 'u'),
+  'û', 'u'),
+  'ü', 'u'),
+  'ÿ', 'y'),
+  'ñ', 'n'),
+  '-', ''),
+  '''', '')`

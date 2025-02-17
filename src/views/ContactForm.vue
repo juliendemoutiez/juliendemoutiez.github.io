@@ -47,7 +47,7 @@
                   <select class="w-24 mr-2" v-model="formData.phone_indicator" id="phone_indicator" required>
                     <option v-for="(indicator, index) of PHONE_INDICATORS" :key="index" :value="indicator.value">{{
                       indicator.value
-                    }}</option>
+                      }}</option>
                   </select>
                   <input v-model="formData.phone" type="tel"
                     :pattern="formData.phone_indicator.length === 3 ? PHONE_PATTERNS.metropolitan.pattern : PHONE_PATTERNS.overseas.pattern"
@@ -62,7 +62,7 @@
                   <select class="w-24 mr-2" v-model="formData.phone2_indicator" id="phone2_indicator" required>
                     <option v-for="(indicator, index) of PHONE_INDICATORS" :key="index" :value="indicator.value">{{
                       indicator.value
-                    }}</option>
+                      }}</option>
                   </select>
                   <input v-model="formData.phone2" type="tel"
                     :pattern="formData.phone2_indicator.length === 3 ? '[0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2}' : '[0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2}'"
@@ -116,11 +116,14 @@ import {
   CONTACT_FORM_DATA,
 } from '@/constants/index'
 import { formatPhoneNumber } from '@/utils/phoneFormat'
+import { replaceAccents } from '@/utils/sqlUtils'
+import { normalizeText } from '@/utils/textUtils'
 
 // Constants
 const QUERIES = {
   duplicate: (fullName, email) => {
-    const fullNameQuery = fullName ? `LOWER(Nom_complet) = LOWER('${fullName}')` : ''
+    const nameField = 'Nom_complet'
+    const fullNameQuery = fullName ? `${replaceAccents(nameField)} = '${normalizeText(fullName)}'` : ''
     const emailQuery = email ? `LOWER(Email) = LOWER('${email}')` : ''
     return `
       SELECT id, Nom_complet, Email
@@ -132,9 +135,10 @@ const QUERIES = {
   suggestions: (type, terms) => {
     const tableName = type === 'community' ? 'COLLECTIVITES' : 'ORGANISATIONS'
     const nameField = type === 'community' ? 'Libelle_et_departement' : 'Nom_sigle'
+
     const whereConditions = terms.map(term =>
-      `LOWER(REPLACE(REPLACE(${nameField}, '-', ''), '''', '')) LIKE '%${term}%'`
-    ).join(' AND ')
+      `${replaceAccents(nameField)} LIKE '%' || '${normalizeText(term)}' || '%'`
+    ).join(' AND ');
 
     return `
       SELECT id, ${nameField}
@@ -221,7 +225,7 @@ const fetchDuplicates = async () => {
     const isEmailMatch = formData.value.email &&
       record.fields.Email.toLowerCase() === formData.value.email.toLowerCase()
     const isNameMatch = fullName &&
-      record.fields.Nom_complet.toLowerCase() === fullName.toLowerCase()
+      normalizeText(record.fields.Nom_complet.toLowerCase()) === normalizeText(fullName.toLowerCase())
 
     if (isEmailMatch && isNameMatch) {
       duplicateFound.value = 'both'

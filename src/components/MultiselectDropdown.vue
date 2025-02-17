@@ -4,8 +4,11 @@
       class="w-full" pattern="^(?!.*).*$" />
     <div v-if="isDropdownOpen"
       class="absolute z-10 w-full mt-1 bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
-      <p v-if="!options && (!suggestions || query === '')" class="px-4 py-2 text-slate-800 text-sm">
+      <p v-if="!options && query === ''" class="px-4 py-2 text-slate-800 text-sm">
         Saisissez du texte pour rechercher...
+      </p>
+      <p v-else-if="loading" class="px-4 py-2 text-slate-800 text-sm">
+        <Loader class="w-4 animate-spin" />
       </p>
       <p v-else-if="availableSuggestions.length === 0" class="px-4 py-2 text-slate-800 text-sm">
         Aucun résultat
@@ -34,7 +37,7 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
 import { debounce } from 'lodash'
-import { X } from 'lucide-vue-next';
+import { Loader, X } from 'lucide-vue-next';
 
 const props = defineProps({
   id: {
@@ -83,6 +86,7 @@ const dropdown = ref(null)
 const input = ref(null)
 const query = ref('')
 const suggestions = ref(props.options || [])
+const loading = ref(false)
 const isDropdownOpen = ref(false)
 
 // Handle outside clicks
@@ -99,6 +103,7 @@ const debouncedFetch = debounce(async (searchQuery) => {
     return
   }
   suggestions.value = await props.fetchSuggestions(preprocessSearchQuery(searchQuery))
+  loading.value = false
 }, 500)
 
 const preprocessSearchQuery = (query) => {
@@ -137,6 +142,7 @@ watch(query, (newQuery) => {
     })
     return
   }
+  loading.value = true
   debouncedFetch(newQuery)
 })
 

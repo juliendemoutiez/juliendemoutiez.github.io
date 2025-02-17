@@ -91,6 +91,8 @@ import { useAlert } from '@/composables/useAlert'
 import BaseForm from '@/components/BaseForm.vue'
 import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
 import { INTERACTION_FORM_DATA } from '@/constants/index'
+import { replaceAccents } from '@/utils/sqlUtils'
+import { normalizeText } from '@/utils/textUtils'
 
 // Constants
 const QUERIES = {
@@ -113,7 +115,7 @@ const QUERIES = {
     }[type];
 
     const whereConditions = terms.map(term =>
-      `LOWER(REPLACE(REPLACE(${nameField}, '-', ''), '''', '')) LIKE '%${term}%'`
+      `${replaceAccents(nameField)} LIKE '%' || '${normalizeText(term)}' || '%'`
     ).join(' AND ');
 
     return `
