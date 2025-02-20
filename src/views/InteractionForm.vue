@@ -178,7 +178,7 @@ const getCurrentUser = async () => {
   try {
     const users = await grist.docApi.fetchTable('UTILISATEURS_summary_Email_Nom_complet')
     currentUser.value = {
-      id: users.id[0],
+      id: users.ID_UTILISATEUR[0][1],
       Nom_complet: users.Nom_complet[0],
       Pages_privees: users.Pages_privees[0]
     }
