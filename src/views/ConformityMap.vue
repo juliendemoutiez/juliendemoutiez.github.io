@@ -380,17 +380,17 @@ const updateMapView = async () => {
     return;
   }
 
-  try {
-    const bounds = mainLayer.value.getBounds();
-    if (bounds && bounds.isValid()) {
-      map.value.fitBounds(bounds, {
-        padding: [50, 50],
-        maxZoom: 13
-      });
-    }
-  } catch {
-    map.value.setView(CONFIG.mapSettings.defaultViewCoords, CONFIG.mapSettings.defaultZoom);
+  // try {
+  const bounds = mainLayer.value.getBounds();
+  if (bounds && bounds.isValid()) {
+    map.value.fitBounds(bounds, {
+      padding: [50, 50],
+      maxZoom: 13
+    });
   }
+  // } catch {
+  //   map.value.setView(CONFIG.mapSettings.defaultViewCoords, CONFIG.mapSettings.defaultZoom);
+  // }
 };
 
 const getFeatureStyle = (properties) => {
