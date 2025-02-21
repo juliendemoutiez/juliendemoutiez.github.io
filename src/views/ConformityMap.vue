@@ -1,17 +1,24 @@
 <template>
   <div class="h-full w-full relative" ref="mapContainer"></div>
+  <BaseLegend :scale="legendScale" position="top-right">
+    <div class="bg-white rounded-xl shadow-lg relative">
+      <MultiselectDropdown id="quicknav" containerClass="absolute w-full" :fetchSuggestions="fetchCommunities"
+        v-model:selected="selectedCommunity" displayField="Libelle_complet" :required="false"
+        :onSelect="handleQuickNav" />
+    </div>
+  </BaseLegend>
   <BaseLegend :scale="legendScale" position="bottom-left">
     <div class="bg-white rounded-xl shadow-lg p-6">
       <div v-if="selectedAreas[currentLevel]">
         <div v-if="Object.values(selectedAreas).length > 1" class="flex items-center mb-2">
-          <a v-if="currentLevel === 'region'" @click="selectLevel('country', '00')" class="cursor-pointer">
+          <a v-if="currentLevel === 'region'" @click="getBackLevel('country', '00')" class="cursor-pointer">
             <p class="text-base text-slate-500 hover:text-slate-800 flex flex-row items-center">
               <Undo2 class="mr-2" />
               France
             </p>
           </a>
-          <a v-if="currentLevel === 'department'"
-            @click="selectLevel('region', selectedAreas['region'].Code_INSEE_geographique)" class="cursor-pointer">
+          <a v-if="currentLevel === 'department' && selectedAreas['region']"
+            @click="getBackLevel('region', selectedAreas['region'].Code_INSEE_geographique)" class="cursor-pointer">
             <p class="text-base text-slate-500 hover:text-slate-800 flex flex-row items-center text-ellipsis">
               <Undo2 class="mr-2" />
               {{ selectedAreas['region'].Libelle }}
@@ -126,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import L from 'leaflet';
 import * as d3 from 'd3';
 import { Undo2, Info, SquareArrowOutUpRight } from 'lucide-vue-next';
@@ -134,7 +141,10 @@ import { useGrist } from '@/composables/useGrist';
 import { useBaseMap } from '@/composables/useBaseMap';
 import BaseLegend from '@/components/BaseLegend.vue';
 import ConformityModal from '@/components/ConformityModal.vue';
+import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
 import { formatNumber } from '@/utils/numberFormat'
+import { replaceAccents } from '@/utils/sqlUtils'
+import { normalizeText } from '@/utils/textUtils'
 
 // Constants
 const CONFIG = {
@@ -162,14 +172,36 @@ const mainLayer = ref(null);
 const period = ref('t1');
 const selectedAreas = ref({});
 const showInfo = ref(false);
+const selectedCommunity = ref([]);
 
 // Initialise composables
 const { executeQuery, fetchAttachment, initializeGrist } = useGrist();
 const { map, mapContainer, legendScale, initializeMap } = useBaseMap(CONFIG.mapSettings);
 
 // Methods
+const fetchCommunities = async (terms) => {
+  try {
+    const nameField = 'Libelle_complet'
+    const whereConditions = terms.map(term =>
+      `${replaceAccents(nameField)} LIKE '%' || '${normalizeText(term)}' || '%'`
+    ).join(' AND ');
+    const query = `
+      SELECT id, ${nameField}, Typologie, Code_INSEE_geographique, Code_INSEE_departement
+      FROM COLLECTIVITES
+      WHERE ${whereConditions}
+      AND (Typologie = 'Région' OR Typologie = 'Département' OR Typologie = 'Commune')
+      ORDER BY ${nameField}
+      LIMIT 10
+    `
+    const records = await executeQuery(query)
+    return records.map(record => record.fields).sort((a, b) => a[nameField].localeCompare(b[nameField]))
+  } catch (error) {
+    console.error('Search error:', error)
+  }
+}
+
 const getAreaQuery = (parentCode) => {
-  const query = `SELECT Code_INSEE_geographique, Libelle, Nombre_de_communes, 
+  const query = `SELECT Code_INSEE_geographique, Code_INSEE_region, Libelle, Nombre_de_communes, 
                  Communes_par_score, geoJSON_regions, geoJSON_departements, 
                  geoJSON_communes 
                  FROM COLLECTIVITES 
@@ -177,12 +209,12 @@ const getAreaQuery = (parentCode) => {
   return { query, args: [parentCode] };
 };
 
-const getChildrenQuery = (parentCode) => {
+const getChildrenQuery = (level, parentCode) => {
   const whereClause = {
     'country': "WHERE Typologie = 'Région'",
     'region': `WHERE Typologie = 'Département' AND Code_INSEE_region = ?`,
     'department': `WHERE Typologie = 'Commune' AND Code_INSEE_departement = ?`
-  }[currentLevel.value];
+  }[level];
 
   const query = `SELECT Code_INSEE_geographique, Typologie, Libelle, 
                  Lien_Annuaire_Service_Public, Composants_score, Score, 
@@ -191,11 +223,11 @@ const getChildrenQuery = (parentCode) => {
 
   return {
     query,
-    args: currentLevel.value === 'country' ? [] : [parentCode]
+    args: level === 'country' ? [] : [parentCode]
   };
 };
 
-const loadSelectedArea = async (parentCode) => {
+const loadArea = async (level, parentCode) => {
   try {
     const { query, args } = getAreaQuery(parentCode);
     const records = await executeQuery(query, args);
@@ -209,7 +241,7 @@ const loadSelectedArea = async (parentCode) => {
       'country': 'geoJSON_regions',
       'region': 'geoJSON_departements',
       'department': 'geoJSON_communes'
-    }[currentLevel.value];
+    }[level];
 
     const attachmentId = JSON.parse(areaData[geoJSONkey])[0];
     const geoJSON = await fetchAttachment(attachmentId).then(res => res.json());
@@ -223,9 +255,9 @@ const loadSelectedArea = async (parentCode) => {
   }
 };
 
-const loadAreaChildren = async (parentCode) => {
+const loadAreaChildren = async (level, parentCode) => {
   try {
-    const { query, args } = getChildrenQuery(parentCode);
+    const { query, args } = getChildrenQuery(level, parentCode);
     const records = await executeQuery(query, args);
     return records;
   } catch (err) {
@@ -235,10 +267,16 @@ const loadAreaChildren = async (parentCode) => {
 };
 
 const loadAndRenderLevel = async (parentCode) => {
+
   try {
+    if (selectedAreas.value?.[currentLevel.value]) {
+      await renderGeography();
+      return;
+    }
+
     const [selectedArea, childrenAreas] = await Promise.all([
-      loadSelectedArea(parentCode),
-      loadAreaChildren(parentCode)
+      loadArea(currentLevel.value, parentCode),
+      loadAreaChildren(currentLevel.value, parentCode)
     ]);
 
     if (!selectedArea || !childrenAreas) {
@@ -249,6 +287,19 @@ const loadAndRenderLevel = async (parentCode) => {
       ...selectedArea,
       childrenAreas
     };
+
+    // Load the region if we've skipped to a department/city
+    if (currentLevel.value === 'department' && !selectedAreas.value['region']) {
+      const regionCode = selectedArea.Code_INSEE_region
+      const [parentRegion, parentChildrenAreas] = await Promise.all([
+        loadArea('region', regionCode),
+        loadAreaChildren('region', regionCode)
+      ]);
+      selectedAreas.value['region'] = {
+        ...parentRegion,
+        childrenAreas: parentChildrenAreas
+      };
+    }
 
     await renderGeography();
   } catch (err) {
@@ -292,14 +343,13 @@ const renderGeography = async () => {
     mainLayer.value = L.geoJSON(
       { ...geoJSON, features: processedFeatures },
       {
-        style: (feature) => getFeatureStyle(feature.properties.score?.[period.value]),
+        style: (feature) => getFeatureStyle(feature.properties),
         onEachFeature: bindFeatureEvents
       }
     ).addTo(map.value);
 
-    updateMapView();
-
     await new Promise(resolve => setTimeout(resolve, 100));
+    await updateMapView();
     dataIsLoaded.value = true;
   } catch (err) {
     console.error('Failed to render geography:', err);
@@ -307,21 +357,52 @@ const renderGeography = async () => {
   }
 };
 
-const updateMapView = () => {
+const updateMapView = async () => {
+  if (!map.value) {
+    console.warn('Map not initialized');
+    return;
+  }
+
+  // Add a small delay to ensure the map is ready
+  await new Promise(resolve => setTimeout(resolve, 100));
+
   if (currentLevel.value === 'country') {
+    try {
+      map.value.setView(CONFIG.mapSettings.defaultViewCoords, CONFIG.mapSettings.defaultZoom);
+    } catch (err) {
+      console.warn('Failed to set default view:', err);
+    }
+    return;
+  }
+
+  if (!mainLayer.value) {
+    console.warn('Main layer not initialized');
+    return;
+  }
+
+  try {
+    const bounds = mainLayer.value.getBounds();
+    if (bounds && bounds.isValid()) {
+      map.value.fitBounds(bounds, {
+        padding: [50, 50],
+        maxZoom: 13
+      });
+    }
+  } catch {
     map.value.setView(CONFIG.mapSettings.defaultViewCoords, CONFIG.mapSettings.defaultZoom);
-  } else if (mainLayer.value?.getBounds()?.isValid()) {
-    map.value.fitBounds(mainLayer.value.getBounds());
   }
 };
 
-const getFeatureStyle = (score) => ({
-  fillColor: getColor(score),
-  weight: 2,
-  opacity: 1,
-  color: 'white',
-  fillOpacity: 0.7
-});
+const getFeatureStyle = (properties) => {
+  const isSelected = selectedAreas.value?.city?.CODE === properties.CODE;
+  return {
+    fillColor: getColor(properties.score?.[period.value]),
+    weight: isSelected ? 4 : 2,
+    opacity: 1,
+    color: isSelected ? getColor(properties.score?.[period.value]) : 'white',
+    fillOpacity: 0.7
+  }
+};
 
 const bindFeatureEvents = (feature, layer) => {
   const tooltipContent = currentLevel.value !== 'department'
@@ -335,14 +416,24 @@ const bindFeatureEvents = (feature, layer) => {
 
   layer
     .on({
-      mouseover: highlightFeature,
-      mouseout: resetHighlight,
-      click: () => handleAreaClick(feature.properties)
+      mouseover: (e) => {
+        if (!dataIsLoaded.value) return;
+        highlightFeature(e);
+      },
+      mouseout: (e) => {
+        if (!dataIsLoaded.value) return;
+        resetHighlight(e);
+      },
+      click: () => {
+        if (!dataIsLoaded.value) return;
+        handleAreaClick(feature.properties);
+      }
     })
     .bindTooltip(tooltipContent, { permanent: false });
 };
 
 const highlightFeature = (e) => {
+  if (!dataIsLoaded.value || !e.target) return;
   const layer = e.target;
   const score = e.target.feature?.properties?.score?.[period.value];
   layer.setStyle({
@@ -354,7 +445,8 @@ const highlightFeature = (e) => {
 };
 
 const resetHighlight = (e) => {
-  mainLayer.value?.resetStyle(e.target);
+  if (!dataIsLoaded.value || !e.target || !mainLayer.value) return;
+  mainLayer.value.resetStyle(e.target);
 };
 
 const handleAreaClick = async (properties) => {
@@ -362,36 +454,75 @@ const handleAreaClick = async (properties) => {
     selectedAreas.value.city = properties;
     return;
   }
-
-  const levelTransitions = {
-    'country': 'region',
-    'region': 'department'
-  };
-
-  currentLevel.value = levelTransitions[currentLevel.value];
-  await loadAndRenderLevel(properties.CODE);
+  await selectLevel(nextLevel.value, properties.CODE)
 };
 
-const selectLevel = async (level, code) => {
-  if (currentLevel.value === level) return;
-
-  currentLevel.value = level;
+const getBackLevel = async (level, code) => {
   if (level === 'country') {
-    selectedAreas.value = {};
+    selectedAreas.value = {
+      country: selectedAreas.value.country
+    };
   } else if (level === 'region') {
     selectedAreas.value = {
-      region: null,
+      ...selectedAreas.value,
       department: null,
       city: null
     };
   }
+  selectLevel(level, code)
+}
 
+const handleQuickNav = async (community) => {
+  const level = {
+    'Région': 'region',
+    'Département': 'department',
+    'Commune': 'department'
+  }[community.Typologie]
+  const codeKey = {
+    'Région': 'Code_INSEE_geographique',
+    'Département': 'Code_INSEE_geographique',
+    'Commune': 'Code_INSEE_departement'
+  }[community.Typologie]
+  selectedAreas.value = {
+    country: selectedAreas.value.country
+  };
+  await selectLevel(level, community[codeKey])
+
+  if (community.Typologie === 'Commune') {
+    const cityRecord = selectedAreas.value['department'].childrenAreas.find(
+      child => child.fields.Code_INSEE_geographique === community.Code_INSEE_geographique
+    );
+    if (cityRecord) {
+      selectedAreas.value['city'] = {
+        ...cityRecord.fields,
+        score_components: JSON.parse(cityRecord.fields.Composants_score || '{}'),
+        score: JSON.parse(cityRecord.fields.Score),
+        CODE: cityRecord.fields.Code_INSEE_geographique,
+        NOM: cityRecord.fields.Libelle,
+        public_service_link: cityRecord.fields.Lien_Annuaire_Service_Public
+      };
+    }
+  }
+}
+
+const selectLevel = async (level, code) => {
+  currentLevel.value = level;
   await loadAndRenderLevel(code);
 };
 
 const getColor = (score) => {
   return score === null ? CONFIG.colors.defaultColor : colorScale(score);
 };
+
+// Computed
+const nextLevel = computed(() => {
+  const levelTransitions = {
+    'country': 'region',
+    'region': 'department',
+    'department': null
+  };
+  return levelTransitions[currentLevel.value] || null;
+});
 
 // Watches
 watch(period, () => {
@@ -402,6 +533,19 @@ watch(period, () => {
     layer.setStyle(getFeatureStyle(score));
   });
 });
+
+watch(() => selectedAreas.value.city, (newCity) => {
+  if (!mainLayer.value) return;
+
+  mainLayer.value.eachLayer(layer => {
+    if (layer.feature.properties.CODE === newCity?.CODE) {
+      layer.setStyle(getFeatureStyle(layer.feature.properties));
+      layer.bringToFront();
+    } else {
+      layer.setStyle(getFeatureStyle(layer.feature.properties));
+    }
+  });
+}, { deep: true });
 
 // Lifecycle hooks
 onMounted(async () => {

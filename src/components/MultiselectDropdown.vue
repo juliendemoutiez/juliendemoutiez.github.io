@@ -1,5 +1,5 @@
 <template>
-  <div class="relative" ref="dropdown">
+  <div :class="containerClass || 'relative'" ref="dropdown">
     <input :id="id" ref="input" type="text" v-model="query" :placeholder="placeholder" @focus="isDropdownOpen = true"
       class="w-full" pattern="^(?!.*).*$" />
     <div v-if="isDropdownOpen"
@@ -44,6 +44,10 @@ const props = defineProps({
     type: String,
     default: null
   },
+  containerClass: {
+    type: String,
+    default: ''
+  },
   placeholder: {
     type: String,
     default: 'Rechercher...'
@@ -75,6 +79,10 @@ const props = defineProps({
   customValidity: {
     type: String,
     default: ''
+  },
+  onSelect: {
+    type: Function,
+    default: null
   }
 })
 
@@ -116,7 +124,11 @@ const preprocessSearchQuery = (query) => {
 }
 
 const handleSelect = (suggestion) => {
-  emit('update:selected', [...props.selected, suggestion])
+  if (props.onSelect) {
+    props.onSelect(suggestion)
+  } else {
+    emit('update:selected', [...props.selected, suggestion])
+  }
   query.value = ''
   isDropdownOpen.value = false
 }

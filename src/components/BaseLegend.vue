@@ -15,12 +15,13 @@ export default {
     position: {
       type: String,
       default: 'bottom-right',
-      validator: (value) => ['bottom-right', 'bottom-left'].includes(value)
+      validator: (value) => ['top-right', 'bottom-right', 'bottom-left'].includes(value)
     }
   },
   computed: {
     positionClass() {
       const positions = {
+        'top-right': 'top-4 right-4 origin-top-right',
         'bottom-right': 'bottom-4 right-4 origin-bottom-right',
         'bottom-left': 'bottom-4 left-4 origin-bottom-left'
       };
