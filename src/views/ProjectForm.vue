@@ -1,6 +1,6 @@
 <template>
-  <BaseForm title="Ajouter un projet" icon="📊" :alert="alert" :warning="duplicateMessage"
-    :submit-disabled="isSubmitting" @submit="handleSubmit">
+  <BaseForm title="Ajouter un projet" icon="📊" :toast="toast" :alert="duplicateAlert" :submit-disabled="isSubmitting"
+    @submit="handleSubmit">
     <template #form-content v-if="formData">
       <div class="grid gap-y-8">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -18,9 +18,9 @@
                 <label class="form-label" for="product">Produit *</label>
                 <select id="product" v-model="formData.product" required>
                   <option disabled selected value>Sélectionner...</option>
-                  <option v-for="(product, index) in formOptions.products" :key="index" :value="product"
-                    :disabled="product === '----------'">
-                    {{ product }}
+                  <option v-for="(product, index) in formOptions.products" :key="index" :value="product.name"
+                    :disabled="product.name === '----------'">
+                    {{ product.name }}
                   </option>
                 </select>
               </div>
@@ -28,8 +28,8 @@
                 <label class="form-label" for="type">Type *</label>
                 <select id="type" v-model="formData.type" required>
                   <option disabled selected value>Sélectionner...</option>
-                  <option v-for="(type, index) in formOptions.types" :key="index" :value="type">
-                    {{ type }}
+                  <option v-for="(type, index) in formOptions.types" :key="index" :value="type.name">
+                    {{ type.name }}
                   </option>
                 </select>
               </div>
@@ -96,7 +96,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { debounce } from 'lodash'
 import { useGrist } from '@/composables/useGrist'
-import { useAlert } from '@/composables/useAlert'
+import { useToast } from '@/composables/useToast'
 import BaseForm from '@/components/BaseForm.vue'
 import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
 import { PROJECT_FORM_DATA } from '@/constants/index'
@@ -146,7 +146,7 @@ const formOptions = ref({
 
 // Initialise composables
 const { executeQuery, executeGetRequest, initializeGrist } = useGrist()
-const { alert, showSuccess, showError } = useAlert()
+const { toast, showSuccess, showError } = useToast()
 
 // Methods
 const handleSubmit = async () => {
@@ -156,8 +156,8 @@ const handleSubmit = async () => {
     const outputData = {
       'Nom': formData.value.name,
       'Description': formData.value.description,
-      'Produit': formData.value.product,
-      'Type': formData.value.type,
+      'Produit': formData.value.product.name,
+      'Type': formData.value.type.name,
       'Date_de_debut': formData.value.start_date,
       'Date_de_fin': formData.value.end_date,
       'Formulaire_d_inscription': formData.value.sign_up_form_url,
@@ -214,14 +214,20 @@ const getFormOptions = async () => {
       const widgetOptions = JSON.parse(tableColumnsSettings.columns.find(column => column.id === columnName).fields.widgetOptions);
       if (key === 'products') {
         const userProjects = currentUser.value.Pages_privees.split(',')
-        const options = widgetOptions.choices.sort();
+        const options = widgetOptions.choices.sort().map(choice => ({
+          id: choice,
+          name: choice
+        }))
         formOptions.value[key] = [
-          ...options.filter(option => userProjects.some(name => option.includes(name))).sort(),
-          ...['----------'],
-          ...options.filter(option => !userProjects.some(name => option.includes(name))).sort(),
+          ...options.filter(option => userProjects.some(name => option.name.includes(name))).sort(),
+          { id: '----------', name: '----------' },
+          ...options.filter(option => !userProjects.some(name => option.name.includes(name))).sort(),
         ]
       } else {
-        formOptions.value[key] = widgetOptions.choices.sort();
+        formOptions.value[key] = widgetOptions.choices.sort().map(choice => ({
+          id: choice,
+          name: choice
+        }))
       }
     });
   } catch (error) {
@@ -258,7 +264,7 @@ const fetchOwners = fetchSuggestions()
 const debouncedFetchDuplicates = debounce(fetchDuplicates, 500)
 
 // Computed
-const duplicateMessage = computed(() => {
+const duplicateAlert = computed(() => {
   if (!duplicateFound.value) return null
   return {
     title: 'Doublon',

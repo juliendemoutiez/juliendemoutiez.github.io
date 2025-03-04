@@ -1,5 +1,5 @@
 <template>
-  <BaseForm title="Ajouter une interaction" icon="☎️" :alert="alert" :submit-disabled="isSubmitting"
+  <BaseForm title="Ajouter une interaction" icon="☎️" :toast="toast" :submit-disabled="isSubmitting"
     @submit="handleSubmit">
     <template #form-content v-if="formData">
       <div class="grid gap-y-8">
@@ -53,7 +53,7 @@
               <div class="col-span-1 sm:col-span-2">
                 <label class="form-label" for="types">Type(s) *</label>
                 <MultiselectDropdown id="types" v-model:selected="formData.types" :options="formOptions.types"
-                  :required="formData.types.length === 0" />
+                  :required="formData.types.length === 0" displayField="name" />
               </div>
               <div class="col-span-1 sm:col-span-2">
                 <label class="form-label" for="projects">Projet(s) *</label>
@@ -87,7 +87,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useGrist } from '@/composables/useGrist'
-import { useAlert } from '@/composables/useAlert'
+import { useToast } from '@/composables/useToast'
 import BaseForm from '@/components/BaseForm.vue'
 import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
 import { INTERACTION_FORM_DATA } from '@/constants/index'
@@ -138,7 +138,7 @@ const formOptions = ref({
 
 // Initialise composables
 const { executeQuery, executeGetRequest, initializeGrist } = useGrist()
-const { alert, showSuccess, showError } = useAlert()
+const { toast, showSuccess, showError } = useToast()
 
 // Methods
 const handleSubmit = async () => {
@@ -148,7 +148,7 @@ const handleSubmit = async () => {
     const outputData = {
       'Date': formData.value.date,
       'Projets': ['L'].concat(formData.value.projects.map(e => e.id)),
-      'Type': ['L'].concat(formData.value.types),
+      'Type': ['L'].concat(formData.value.types.map(e => e.name)),
       'Contacts': ['L'].concat(formData.value.contacts.map(e => e.id)),
       'Contact_s_interne_s_': ['L'].concat(formData.value.internalContacts.map(e => e.id)),
       'Notes': formData.value.notes,
@@ -193,7 +193,10 @@ const retrieveFormOptions = async () => {
   try {
     [['Type', 'types']].forEach(([columnName, key]) => {
       const widgetOptions = JSON.parse(tableColumnsSettings.columns.find(column => column.id === columnName).fields.widgetOptions);
-      formOptions.value[key] = widgetOptions.choices.sort();
+      formOptions.value[key] = widgetOptions.choices.sort().map(choice => ({
+        id: choice,
+        name: choice
+      }))
     });
   } catch (error) {
     console.error('Error parsing form options:', error);

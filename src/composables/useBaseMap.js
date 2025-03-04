@@ -48,8 +48,8 @@ export const useBaseMap = (config) => {
   const setupResizeObserver = () => {
     resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const widthScale = Math.max(0.6, Math.min(0.9, entry.contentRect.width / 1500))
-        const heightScale = Math.max(0.6, Math.min(0.9, entry.contentRect.height / 900))
+        const widthScale = Math.max(0.6, Math.min(1, entry.contentRect.width / 1500))
+        const heightScale = Math.max(0.6, Math.min(1, entry.contentRect.height / 900))
         legendScale.value = Math.min(widthScale, heightScale)
         if (map.value) {
           map.value.invalidateSize()

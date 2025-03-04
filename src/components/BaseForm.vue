@@ -1,5 +1,5 @@
 <template>
-  <Alert v-if="props.alert" v-bind="props.alert" />
+  <Toast v-if="props.toast" :type="props.toast.type" :title="props.toast.title" :message="props.toast.message" />
   <div class="h-full px-4 pt-10 bg-slate-100 flex flex-col items-center overflow-auto">
     <div class="bg-white shadow-lg rounded-t-lg w-full max-w-screen-lg flex-1 h-fit">
       <form @submit="handleSubmit">
@@ -20,14 +20,7 @@
           </button>
         </div>
         <div class="p-6 space-y-6">
-          <div v-if="props.warning" role="alert"
-            class="rounded border border-yellow-200 bg-yellow-50 px-4 py-2 flex-1 mb-6">
-            <div class="flex items-center gap-2 text-yellow-800">
-              <AlertCircle class="size-5" />
-              <p class="block font-medium text-xs">{{ props.warning.title }}</p>
-            </div>
-            <p class="mt-1 text-xs text-yellow-700">{{ props.warning.message }}</p>
-          </div>
+          <Alert v-if="props.alert" :alert="props.alert" />
           <slot name="form-content"></slot>
         </div>
       </form>
@@ -36,11 +29,11 @@
 </template>
 
 <script setup>
-import { AlertCircle } from 'lucide-vue-next'
+import Toast from '@/components/Toast.vue'
 import Alert from '@/components/Alert.vue'
 
 const props = defineProps({
-  alert: {
+  toast: {
     type: Object,
     default: null
   },
@@ -60,7 +53,7 @@ const props = defineProps({
     type: String,
     required: true
   },
-  warning: {
+  alert: {
     type: Object,
     default: null
   },

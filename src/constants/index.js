@@ -65,5 +65,20 @@ export const INTERACTION_FORM_DATA = {
   types: [],
   internalContacts: [],
   contacts: [],
-  Notes: '',
+  notes: '',
+}
+
+export const EVENT_FORM_DATA = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  phone_indicator: '+33',
+  position: '',
+  communities: [],
+  organisations: [],
+  products_interested: [],
+  subject: '',
+  subject_other: '',
+  notes: '',
 }

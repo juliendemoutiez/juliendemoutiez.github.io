@@ -1,9 +1,10 @@
 <template>
   <div class="h-full w-full relative" ref="mapContainer"></div>
   <BaseLegend :scale="legendScale" position="top-right">
-    <div class="bg-white rounded-xl shadow-lg relative">
-      <MultiselectDropdown id="quicknav" containerClass="absolute w-full" :fetchSuggestions="fetchCommunities"
-        v-model:selected="selectedCommunity" displayField="Libelle_complet" :required="false"
+    <div class="bg-white p-4 rounded-xl shadow-lg relative">
+      <p class="text-slate-800 mb-2 text-base font-medium">Rechercher une collectivité</p>
+      <MultiselectDropdown id="quicknav" :fetchSuggestions="fetchCommunities" v-model:selected="selectedCommunity"
+        displayField="Libelle_complet" placeholder="Région, département ou commune" :required="false"
         :onSelect="handleQuickNav" />
     </div>
   </BaseLegend>
@@ -33,15 +34,15 @@
           <div v-for="score in ['3', '2', '1', '0']" :key="score" class="relative">
             <div class="flex justify-between text-sm text-slate-600 mb-1">
               <span>
-                {{ formatNumber(selectedAreas[currentLevel].Communes_par_score[period][score]) }}
-                ({{ Math.round(selectedAreas[currentLevel].Communes_par_score[period][score] /
+                {{ formatNumber(getValueForPeriod(selectedAreas[currentLevel].Communes_par_score_new, period)[score]) }}
+                ({{ Math.round(getValueForPeriod(selectedAreas[currentLevel].Communes_par_score_new, period)[score] /
                   selectedAreas[currentLevel].Nombre_de_communes * 100) }}%)
               </span>
             </div>
             <div class="h-3 bg-slate-200 rounded-full w-full">
               <transition name="bar" appear>
                 <div class="h-full rounded-full transition-[width] duration-1000 ease-ease" :style="{
-                  width: dataIsLoaded ? `${(Math.round(selectedAreas[currentLevel].Communes_par_score[period][score] / selectedAreas[currentLevel].Nombre_de_communes * 100))}%` : '0%',
+                  width: dataIsLoaded ? `${(Math.round(getValueForPeriod(selectedAreas[currentLevel].Communes_par_score_new, period)[score] / selectedAreas[currentLevel].Nombre_de_communes * 100))}%` : '0%',
                   backgroundColor: getColor(parseInt(score))
                 }">
                 </div>
@@ -71,33 +72,33 @@
         <div>
           <div class="flex items-center mb-1">
             <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center"
-              :style="{ backgroundColor: getColor(selectedAreas['city'].score_components[period].indexOf('TLD OK') < 0 ? 0 : 3) }">
-              <span class="text-white leading-3">{{ selectedAreas['city'].score_components[period].indexOf('TLD OK') < 0
-                ? '×' : '✓' }}</span>
+              :style="{ backgroundColor: getColor(getValueForPeriod(selectedAreas['city'].score_components, period).indexOf('TLD OK') < 0 ? 0 : 3) }">
+              <span class="text-white leading-3">{{ getValueForPeriod(selectedAreas['city'].score_components,
+                period).indexOf('TLD OK') < 0 ? '×' : '✓' }}</span>
               </span>
               <span class="text-slate-800">Domaine et extension conformes</span>
           </div>
           <div class="flex items-center mb-1">
             <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center"
-              :style="{ backgroundColor: getColor(selectedAreas['city'].score_components[period].indexOf('PROP') < 0 ? 0 : 3) }">
-              <span class="text-white leading-3">{{ selectedAreas['city'].score_components[period].indexOf('PROP') < 0
-                ? '×' : '✓' }}</span>
+              :style="{ backgroundColor: getColor(getValueForPeriod(selectedAreas['city'].score_components, period).indexOf('PROP') < 0 ? 0 : 3) }">
+              <span class="text-white leading-3">{{ getValueForPeriod(selectedAreas['city'].score_components,
+                period).indexOf('PROP') < 0 ? '×' : '✓' }}</span>
               </span>
               <span class="text-slate-800">Propriété du domaine</span>
           </div>
           <div class="flex items-center mb-1">
             <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center"
-              :style="{ backgroundColor: getColor(selectedAreas['city'].score_components[period].indexOf('HTTPS') < 0 ? 0 : 3) }">
-              <span class="text-white leading-3">{{ selectedAreas['city'].score_components[period].indexOf('HTTPS') < 0
-                ? '×' : '✓' }}</span>
+              :style="{ backgroundColor: getColor(getValueForPeriod(selectedAreas['city'].score_components, period).indexOf('HTTPS') < 0 ? 0 : 3) }">
+              <span class="text-white leading-3">{{ getValueForPeriod(selectedAreas['city'].score_components,
+                period).indexOf('HTTPS') < 0 ? '×' : '✓' }}</span>
               </span>
               <span class="text-slate-800">Site web conforme (HTTPS)</span>
           </div>
           <div class="flex items-center mb-1">
             <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center"
-              :style="{ backgroundColor: getColor(selectedAreas['city'].score_components[period].indexOf('MAIL OK') < 0 ? 0 : 3) }">
-              <span class="text-white leading-3">{{ selectedAreas['city'].score_components[period].indexOf('MAIL OK')
-                < 0 ? '×' : '✓' }}</span>
+              :style="{ backgroundColor: getColor(getValueForPeriod(selectedAreas['city'].score_components, period).indexOf('MAIL OK') < 0 ? 0 : 3) }">
+              <span class="text-white leading-3">{{ getValueForPeriod(selectedAreas['city'].score_components,
+                period).indexOf('MAIL OK') < 0 ? '×' : '✓' }}</span>
               </span>
               <span class="text-slate-800">Messagerie conforme</span>
           </div>
@@ -115,10 +116,9 @@
     </div>
     <div class="mt-4 bg-white rounded-xl shadow-lg p-6 text-slate-500 hover:text-slate-800">
       <div class="flex flex-row items-center justify-between mb-4">
-        <p class="font-medium text-slate-800 mr-2">Données</p>
+        <p class="font-medium text-base text-slate-800 mr-2">Données</p>
         <select v-model="period" class="bg-slate-100 rounded-md p-2 text-slate-800 px-2">
-          <option value="t0">Historique</option>
-          <option value="t1">Q1 2025</option>
+          <option v-for="p in periods" :key="p.value" :value="p.value">{{ p.label }}</option>
         </select>
       </div>
       <div @click="showInfo = true" class="cursor-pointer">
@@ -133,15 +133,17 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue';
+import { ref, watch, onMounted, computed, toRaw } from 'vue';
 import L from 'leaflet';
 import * as d3 from 'd3';
 import { Undo2, Info, SquareArrowOutUpRight } from 'lucide-vue-next';
 import { useGrist } from '@/composables/useGrist';
 import { useBaseMap } from '@/composables/useBaseMap';
+
 import BaseLegend from '@/components/BaseLegend.vue';
 import ConformityModal from '@/components/ConformityModal.vue';
 import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
+
 import { formatNumber } from '@/utils/numberFormat'
 import { replaceAccents } from '@/utils/sqlUtils'
 import { normalizeText } from '@/utils/textUtils'
@@ -169,7 +171,8 @@ const colorScale = d3.scaleLinear()
 const currentLevel = ref('country');
 const dataIsLoaded = ref(false);
 const mainLayer = ref(null);
-const period = ref('t1');
+const periods = ref([])
+const period = ref('last');
 const selectedAreas = ref({});
 const showInfo = ref(false);
 const selectedCommunity = ref([]);
@@ -202,7 +205,7 @@ const fetchCommunities = async (terms) => {
 
 const getAreaQuery = (parentCode) => {
   const query = `SELECT Code_INSEE_geographique, Code_INSEE_region, Libelle, Nombre_de_communes, 
-                 Communes_par_score, geoJSON_regions, geoJSON_departements, 
+                 Communes_par_score_new, geoJSON_regions, geoJSON_departements, 
                  geoJSON_communes 
                  FROM COLLECTIVITES 
                  WHERE Code_INSEE_geographique = ?`;
@@ -217,8 +220,8 @@ const getChildrenQuery = (level, parentCode) => {
   }[level];
 
   const query = `SELECT Code_INSEE_geographique, Typologie, Libelle, 
-                 Lien_Annuaire_Service_Public, Composants_score, Score, 
-                 Score_moyen 
+                 Lien_Annuaire_Service_Public, Composants_score_new, Score_new, 
+                 Score_moyen_new 
                  FROM COLLECTIVITES ${whereClause}`;
 
   return {
@@ -246,7 +249,7 @@ const loadArea = async (level, parentCode) => {
     const attachmentId = JSON.parse(areaData[geoJSONkey])[0];
     const geoJSON = await fetchAttachment(attachmentId).then(res => res.json());
 
-    areaData.Communes_par_score = JSON.parse(areaData.Communes_par_score);
+    areaData.Communes_par_score_new = JSON.parse(areaData.Communes_par_score_new);
 
     return { ...areaData, geoJSON };
   } catch (err) {
@@ -267,7 +270,6 @@ const loadAreaChildren = async (level, parentCode) => {
 };
 
 const loadAndRenderLevel = async (parentCode) => {
-
   try {
     if (selectedAreas.value?.[currentLevel.value]) {
       await renderGeography();
@@ -300,7 +302,6 @@ const loadAndRenderLevel = async (parentCode) => {
         childrenAreas: parentChildrenAreas
       };
     }
-
     await renderGeography();
   } catch (err) {
     console.error('Failed to load level:', err);
@@ -310,7 +311,6 @@ const loadAndRenderLevel = async (parentCode) => {
 
 const renderGeography = async () => {
   if (!selectedAreas.value?.[currentLevel.value]) return;
-
   try {
     dataIsLoaded.value = false;
 
@@ -326,15 +326,15 @@ const renderGeography = async () => {
       if (!record) return feature;
 
       const score = record.fields.Typologie === 'Commune'
-        ? JSON.parse(record.fields.Score)
-        : JSON.parse(record.fields.Score_moyen);
+        ? JSON.parse(record.fields.Score_new)
+        : JSON.parse(record.fields.Score_moyen_new);
 
       return {
         ...feature,
         properties: {
           ...feature.properties,
           score,
-          score_components: JSON.parse(record.fields.Composants_score || '{}'),
+          score_components: JSON.parse(record.fields.Composants_score_new || '{}'),
           public_service_link: record.fields.Lien_Annuaire_Service_Public
         }
       };
@@ -346,60 +346,41 @@ const renderGeography = async () => {
         style: (feature) => getFeatureStyle(feature.properties),
         onEachFeature: bindFeatureEvents
       }
-    ).addTo(map.value);
+    ).addTo(toRaw(map.value));
 
-    await new Promise(resolve => setTimeout(resolve, 100));
     await updateMapView();
-    dataIsLoaded.value = true;
   } catch (err) {
     console.error('Failed to render geography:', err);
     throw err;
+  } finally {
+    dataIsLoaded.value = true;
   }
-};
+}
 
 const updateMapView = async () => {
-  if (!map.value) {
-    console.warn('Map not initialized');
-    return;
-  }
-
-  // Add a small delay to ensure the map is ready
-  await new Promise(resolve => setTimeout(resolve, 100));
-
   if (currentLevel.value === 'country') {
-    try {
-      map.value.setView(CONFIG.mapSettings.defaultViewCoords, CONFIG.mapSettings.defaultZoom);
-    } catch (err) {
-      console.warn('Failed to set default view:', err);
-    }
+    map.value.setView(CONFIG.mapSettings.defaultViewCoords, CONFIG.mapSettings.defaultZoom);
     return;
   }
 
-  if (!mainLayer.value) {
-    console.warn('Main layer not initialized');
-    return;
-  }
-
-  // try {
   const bounds = mainLayer.value.getBounds();
   if (bounds && bounds.isValid()) {
     map.value.fitBounds(bounds, {
       padding: [50, 50],
-      maxZoom: 13
+      maxZoom: 13,
     });
   }
-  // } catch {
-  //   map.value.setView(CONFIG.mapSettings.defaultViewCoords, CONFIG.mapSettings.defaultZoom);
-  // }
+
 };
 
 const getFeatureStyle = (properties) => {
   const isSelected = selectedAreas.value?.city?.CODE === properties.CODE;
+  const score = getValueForPeriod(properties.score, period.value)
   return {
-    fillColor: getColor(properties.score?.[period.value]),
-    weight: isSelected ? 4 : 2,
+    fillColor: getColor(score),
+    weight: isSelected ? 3 : 2,
     opacity: 1,
-    color: isSelected ? getColor(properties.score?.[period.value]) : 'white',
+    color: isSelected ? '#1E293B' : 'white',
     fillOpacity: 0.7
   }
 };
@@ -407,12 +388,12 @@ const getFeatureStyle = (properties) => {
 const bindFeatureEvents = (feature, layer) => {
   const tooltipContent = currentLevel.value !== 'department'
     ? `<div class="bg-white p-2">
-         <p class="font-bold text-base text-slate-800">${feature.properties.NOM}</p>
-       </div>`
+        <p class="font-bold text-base text-slate-800">${feature.properties.NOM}</p>
+      </div>`
     : `<div class="bg-white p-2">
-         <p class="font-bold text-base text-slate-800 mb-2">${feature.properties.NOM}</p>
-         <p>Cliquez pour afficher les détails</p>
-       </div>`;
+        <p class="font-bold text-base text-slate-800 mb-2">${feature.properties.NOM}</p>
+        <p>Cliquez pour afficher les détails</p>
+      </div>`;
 
   layer
     .on({
@@ -435,13 +416,22 @@ const bindFeatureEvents = (feature, layer) => {
 const highlightFeature = (e) => {
   if (!dataIsLoaded.value || !e.target) return;
   const layer = e.target;
-  const score = e.target.feature?.properties?.score?.[period.value];
+  const currentColor = e.target.options.fillColor;
   layer.setStyle({
     weight: 3,
-    color: getColor(score),
+    color: currentColor,
     opacity: 0.9,
   });
-  layer.bringToFront();
+  if (selectedAreas.value?.city) {
+    layer.bringToFront();
+    mainLayer.value.eachLayer(l => {
+      if (l.feature?.properties?.CODE === selectedAreas.value.city.CODE) {
+        l.bringToFront();
+      }
+    });
+  } else {
+    layer.bringToFront();
+  }
 };
 
 const resetHighlight = (e) => {
@@ -495,8 +485,8 @@ const handleQuickNav = async (community) => {
     if (cityRecord) {
       selectedAreas.value['city'] = {
         ...cityRecord.fields,
-        score_components: JSON.parse(cityRecord.fields.Composants_score || '{}'),
-        score: JSON.parse(cityRecord.fields.Score),
+        score_components: JSON.parse(cityRecord.fields.Composants_score_new || '{}'),
+        score: JSON.parse(cityRecord.fields.Score_new),
         CODE: cityRecord.fields.Code_INSEE_geographique,
         NOM: cityRecord.fields.Libelle,
         public_service_link: cityRecord.fields.Lien_Annuaire_Service_Public
@@ -514,6 +504,19 @@ const getColor = (score) => {
   return score === null ? CONFIG.colors.defaultColor : colorScale(score);
 };
 
+const getValueForPeriod = (data, period) => {
+  let periodKey;
+  if (period === 'last' && Object.keys(data).indexOf('last') > -1) {
+    periodKey = 'last'
+  } else if (period === 'last') {
+    periodKey = Object.keys(data).pop()
+  } else {
+    const closestPeriod = Object.keys(data).find(key => new Date(key) <= new Date(period));
+    periodKey = closestPeriod;
+  }
+  return data[periodKey];
+}
+
 // Computed
 const nextLevel = computed(() => {
   const levelTransitions = {
@@ -529,8 +532,7 @@ watch(period, () => {
   if (!mainLayer.value) return;
 
   mainLayer.value.eachLayer(layer => {
-    const score = layer.feature.properties.score[period.value];
-    layer.setStyle(getFeatureStyle(score));
+    layer.setStyle(getFeatureStyle(layer.feature.properties));
   });
 });
 
@@ -547,10 +549,29 @@ watch(() => selectedAreas.value.city, (newCity) => {
   });
 }, { deep: true });
 
+const setPeriods = async () => {
+  const startDate = new Date('2024-12-31');
+  const endDate = new Date();
+  while (startDate <= endDate) {
+    const quarter = Math.floor((startDate.getMonth() + 1) / 3);
+    const year = startDate.getFullYear();
+    periods.value.push({
+      label: `Q${quarter} ${year}`,
+      value: startDate.toISOString().split('T')[0]
+    });
+    startDate.setMonth(startDate.getMonth() + 3);
+  }
+  periods.value.push({
+    label: 'Les plus récentes',
+    value: 'last'
+  });
+}
+
 // Lifecycle hooks
 onMounted(async () => {
   try {
     await initializeGrist();
+    await setPeriods();
     await initializeMap();
     await loadAndRenderLevel('00');
   } catch (err) {

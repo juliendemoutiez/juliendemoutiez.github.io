@@ -1,7 +1,7 @@
 <template>
   <div :class="containerClass || 'relative'" ref="dropdown">
     <input :id="id" ref="input" type="text" v-model="query" :placeholder="placeholder" @focus="isDropdownOpen = true"
-      class="w-full" pattern="^(?!.*).*$" />
+      class="w-full" pattern="^(?!.*).*$" :disabled="disabled" />
     <div v-if="isDropdownOpen"
       class="absolute z-10 w-full mt-1 bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
       <p v-if="!options && query === ''" class="px-4 py-2 text-slate-800 text-sm">
@@ -15,21 +15,28 @@
       </p>
       <ul v-else-if="availableSuggestions.length">
         <li v-for="(suggestion, index) in availableSuggestions" :key="index" @click="handleSelect(suggestion)"
-          class="px-4 py-2 hover:bg-blue-50 cursor-pointer text-slate-800 text-sm">
+          class="px-4 py-2 hover:bg-blue-50 cursor-pointer text-slate-800 text-sm flex items-center justify-between">
           {{ displayField ? suggestion[displayField] : suggestion }}
+          <button v-if="suggestion.is_new" type="button" @click="handleSelect(suggestion)"
+            class="ml-2 text-blue-500 hover:text-blue-800">
+            <Plus class="w-4 h-4" />
+          </button>
         </li>
       </ul>
     </div>
 
-    <div class="mt-2 flex flex-wrap gap-2">
-      <div v-for="(item, index) in selected" :key="item.id"
-        class="inline-flex items-center justify-center rounded-full bg-blue-100 px-2.5 py-1 text-blue-700 max-w-full">
-        <p class="truncate text-sm">{{ displayField ? item[displayField] : item }}</p>
-        <button type="button" @click="handleRemove(index)"
-          class="rounded-full bg-blue-200 text-blue-700 transition hover:bg-blue-300 ml-2">
-          <X class="w-3.5 h-3.5 m-0.5" />
-        </button>
-      </div>
+    <div class="mt-2 flex flex-wrap gap-2" v-if="selected.length > 0">
+      <slot name="selected-item" v-for="(item, index) in selected" :key="item.id" :item="item" :index="index"
+        :remove="handleRemove">
+        <div
+          class="inline-flex items-center justify-center rounded-full bg-blue-100 px-2.5 py-1 text-blue-700 max-w-full">
+          <p class="truncate text-sm">{{ displayField ? item[displayField] : item }}</p>
+          <button type="button" @click="handleRemove(index)" v-if="!disabled"
+            class="rounded-full bg-blue-200 text-blue-700 transition hover:bg-blue-300 ml-2">
+            <X class="w-3.5 h-3.5 m-0.5" />
+          </button>
+        </div>
+      </slot>
     </div>
   </div>
 </template>
@@ -37,7 +44,7 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
 import { debounce } from 'lodash'
-import { Loader, X } from 'lucide-vue-next';
+import { Loader, X, Plus } from 'lucide-vue-next';
 
 const props = defineProps({
   id: {
@@ -83,6 +90,14 @@ const props = defineProps({
   onSelect: {
     type: Function,
     default: null
+  },
+  allowNew: {
+    type: Boolean,
+    default: false
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -165,12 +180,13 @@ watch(
 
 // Computed
 const availableSuggestions = computed(() => {
-  return suggestions.value.filter((suggestion) => {
+  const currentSuggestions = suggestions.value
+  if (props.allowNew) {
+    currentSuggestions.unshift({ id: query.value, is_new: true, [props.displayField]: query.value })
+  }
+  return currentSuggestions.filter((suggestion) => {
     return !props.selected.some((selected) => {
-      if (props.options) {
-        return selected === suggestion
-      }
-      return selected.id === suggestion.id
+      return selected[props.displayField].toLowerCase() === suggestion[props.displayField].toLowerCase()
     })
   })
 })

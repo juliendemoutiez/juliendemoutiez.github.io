@@ -72,6 +72,18 @@ export const useGrist = (config = { tokenRefreshInterval: 14 * 60 * 1000 }) => {
     grist.onRecords(callback)
   }
 
+  const createRecords = async (table, records) => {
+    if (!gristTokenInfo.value) throw new Error('Token not initialized')
+
+    const src = `${gristTokenInfo.value.baseUrl}/tables/${table}/records?auth=${gristTokenInfo.value.token}`
+    const response = await fetch(src, {
+      method: 'POST',
+      body: JSON.stringify({ records }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    return response.json()
+  }
+
   const initializeGrist = async () => {
     try {
       await grist.ready()
@@ -97,5 +109,6 @@ export const useGrist = (config = { tokenRefreshInterval: 14 * 60 * 1000 }) => {
     setupSubscriptions,
     initializeGrist,
     initializeToken,
+    createRecords,
   }
 }

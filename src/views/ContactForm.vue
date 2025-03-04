@@ -1,5 +1,5 @@
 <template>
-  <BaseForm title="Ajouter un contact" icon="🧑" :alert="alert" :warning="duplicateMessage"
+  <BaseForm title="Ajouter un contact" icon="🧑" :toast="toast" :alert="duplicateAlert"
     :submit-disabled="isSubmitting || duplicateFound === 'email' || duplicateFound == 'both'" @submit="handleSubmit">
     <template #form-content v-if="formData">
       <div class="grid gap-y-8">
@@ -47,7 +47,7 @@
                   <select class="w-24 mr-2" v-model="formData.phone_indicator" id="phone_indicator" required>
                     <option v-for="(indicator, index) of PHONE_INDICATORS" :key="index" :value="indicator.value">{{
                       indicator.value
-                      }}</option>
+                    }}</option>
                   </select>
                   <input v-model="formData.phone" type="tel"
                     :pattern="formData.phone_indicator.length === 3 ? PHONE_PATTERNS.metropolitan.pattern : PHONE_PATTERNS.overseas.pattern"
@@ -62,7 +62,7 @@
                   <select class="w-24 mr-2" v-model="formData.phone2_indicator" id="phone2_indicator" required>
                     <option v-for="(indicator, index) of PHONE_INDICATORS" :key="index" :value="indicator.value">{{
                       indicator.value
-                      }}</option>
+                    }}</option>
                   </select>
                   <input v-model="formData.phone2" type="tel"
                     :pattern="formData.phone2_indicator.length === 3 ? '[0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2}' : '[0-9]{2} [0-9]{2} [0-9]{2} [0-9]{2}'"
@@ -107,7 +107,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { debounce } from 'lodash'
 import { useGrist } from '@/composables/useGrist'
-import { useAlert } from '@/composables/useAlert'
+import { useToast } from '@/composables/useToast'
 import BaseForm from '@/components/BaseForm.vue'
 import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
 import {
@@ -157,7 +157,7 @@ const isSubmitting = ref(false)
 
 // Initialise composables
 const { executeQuery, initializeGrist } = useGrist()
-const { alert, showSuccess, showError } = useAlert()
+const { toast, showSuccess, showError } = useToast()
 
 // Methods
 const handlePhoneFormat = (_event, key) => {
@@ -262,7 +262,7 @@ const hasRequiredSelections = computed(() =>
   formData.value.organisations.length > 0
 )
 
-const duplicateMessage = computed(() => {
+const duplicateAlert = computed(() => {
   if (!duplicateFound.value) return null
 
   const messages = {

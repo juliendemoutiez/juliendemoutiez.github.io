@@ -1,5 +1,5 @@
 <template>
-  <BaseForm title="Ajouter une organisation" icon="🏛️" :alert="alert" :warning="duplicateMessage"
+  <BaseForm title="Ajouter une organisation" icon="🏛️" :toast="toast" :alert="duplicateAlert"
     :submit-disabled="isSubmitting || duplicateFound === 'name'" @submit="handleSubmit">
     <template #form-content v-if="formData">
       <div class="grid gap-y-8">
@@ -22,13 +22,13 @@
               <div class="col-span-2">
                 <label class="form-label" for="typologies">Typologie *</label>
                 <MultiselectDropdown id="typologies" v-model:selected="formData.typologies"
-                  :options="formOptions.typologies" :required="formData.typologies.length === 0"
+                  :options="formOptions.typologies" :required="formData.typologies.length === 0" displayField="name"
                   customValidity="Veuillez sélectionner au moins une typologie" />
               </div>
               <div class="col-span-2">
                 <label class="form-label" for="statuses">Statut juridique *</label>
                 <MultiselectDropdown id="statuses" v-model:selected="formData.legalStatuses"
-                  :options="formOptions.statuses" :required="formData.legalStatuses.length === 0"
+                  :options="formOptions.statuses" :required="formData.legalStatuses.length === 0" displayField="name"
                   customValidity="Veuillez sélectionner au moins un statut juridique" />
               </div>
               <div class="col-span-2">
@@ -70,8 +70,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { debounce } from 'lodash'
 import { Info } from 'lucide-vue-next'
+
 import { useGrist } from '@/composables/useGrist'
-import { useAlert } from '@/composables/useAlert'
+import { useToast } from '@/composables/useToast'
 import BaseForm from '@/components/BaseForm.vue'
 import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
 import { ORGANISATION_FORM_DATA } from '@/constants/index'
@@ -120,7 +121,7 @@ const formOptions = ref({
 
 // Initialise composables
 const { executeQuery, executeGetRequest, initializeGrist } = useGrist()
-const { alert, showSuccess, showError } = useAlert()
+const { toast, showSuccess, showError } = useToast()
 
 // Methods
 const handleSubmit = async () => {
@@ -129,9 +130,9 @@ const handleSubmit = async () => {
   try {
     const outputData = {
       'Nom': formData.value.name,
-      'Typologie': ['L'].concat(formData.value.typologies),
+      'Typologie': ['L'].concat(formData.value.typologies.map(e => e.name)),
       'Sigle': formData.value.acronym,
-      'Statut_juridique': ['L'].concat(formData.value.legalStatuses),
+      'Statut_juridique': ['L'].concat(formData.value.legalStatuses.map(e => e.name)),
       'Site_web': formData.value.website.toLowerCase(),
       'Couverture': ['L'].concat(formData.value.communities.map(e => e.id)),
     }
@@ -177,7 +178,10 @@ const retrieveFormOptions = async () => {
   try {
     [['Typologie', 'typologies'], ['Statut_juridique', 'statuses']].forEach(([columnName, key]) => {
       const widgetOptions = JSON.parse(tableColumnsSettings.columns.find(column => column.id === columnName).fields.widgetOptions);
-      formOptions.value[key] = widgetOptions.choices.sort();
+      formOptions.value[key] = widgetOptions.choices.sort().map(choice => ({
+        id: choice,
+        name: choice
+      }))
     });
   } catch (error) {
     console.error('Error parsing form options:', error);
@@ -199,7 +203,7 @@ const fetchCommunities = fetchSuggestions()
 const debouncedFetchDuplicates = debounce(fetchDuplicates, 500)
 
 // Computed
-const duplicateMessage = computed(() => {
+const duplicateAlert = computed(() => {
   if (!duplicateFound.value) return null
   return {
     title: 'Doublon',

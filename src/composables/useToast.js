@@ -1,25 +1,25 @@
 import { ref } from 'vue'
 
-export function useAlert() {
-  const alert = ref(null)
+export function useToast() {
+  const toast = ref(null)
   let timeoutId = null
 
-  const showAlert = ({ type = 'success', title, message, duration = 3000 }) => {
+  const showToast = ({ type = 'success', title, message, duration = 3000 }) => {
     if (timeoutId) clearTimeout(timeoutId)
 
-    alert.value = {
+    toast.value = {
       type,
       title,
       message,
     }
 
     timeoutId = setTimeout(() => {
-      hideAlert()
+      hideToast()
     }, duration)
   }
 
-  const hideAlert = () => {
-    alert.value = null
+  const hideToast = () => {
+    toast.value = null
     if (timeoutId) {
       clearTimeout(timeoutId)
       timeoutId = null
@@ -27,17 +27,15 @@ export function useAlert() {
   }
 
   const showSuccess = (message, title = 'Succès 🎉') => {
-    showAlert({ type: 'success', title, message })
+    showToast({ type: 'success', title, message })
   }
 
   const showError = (message, title = 'Erreur') => {
-    showAlert({ type: 'error', title, message })
+    showToast({ type: 'error', title, message })
   }
 
   return {
-    alert,
-    showAlert,
-    hideAlert,
+    toast,
     showSuccess,
     showError,
   }

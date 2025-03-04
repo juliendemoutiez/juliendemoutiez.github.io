@@ -5,6 +5,7 @@ import ContactForm from '@/views/ContactForm.vue'
 import OrganisationForm from '@/views/OrganisationForm.vue'
 import ProjectForm from '@/views/ProjectForm.vue'
 import InteractionForm from '@/views/InteractionForm.vue'
+import EventForm from '@/views/EventForm.vue'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -38,6 +39,11 @@ const router = createRouter({
       path: '/interaction-form',
       name: 'interaction-form',
       component: InteractionForm,
+    },
+    {
+      path: '/event-form',
+      name: 'event-form',
+      component: EventForm,
     },
   ],
 })
