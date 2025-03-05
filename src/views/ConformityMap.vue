@@ -34,15 +34,15 @@
           <div v-for="score in ['3', '2', '1', '0']" :key="score" class="relative">
             <div class="flex justify-between text-sm text-slate-600 mb-1">
               <span>
-                {{ formatNumber(getValueForPeriod(selectedAreas[currentLevel].Communes_par_score_new, period)[score]) }}
-                ({{ Math.round(getValueForPeriod(selectedAreas[currentLevel].Communes_par_score_new, period)[score] /
+                {{ formatNumber(getValueForPeriod(selectedAreas[currentLevel].Communes_par_score, period)[score]) }}
+                ({{ Math.round(getValueForPeriod(selectedAreas[currentLevel].Communes_par_score, period)[score] /
                   selectedAreas[currentLevel].Nombre_de_communes * 100) }}%)
               </span>
             </div>
             <div class="h-3 bg-slate-200 rounded-full w-full">
               <transition name="bar" appear>
                 <div class="h-full rounded-full transition-[width] duration-1000 ease-ease" :style="{
-                  width: dataIsLoaded ? `${(Math.round(getValueForPeriod(selectedAreas[currentLevel].Communes_par_score_new, period)[score] / selectedAreas[currentLevel].Nombre_de_communes * 100))}%` : '0%',
+                  width: dataIsLoaded ? `${(Math.round(getValueForPeriod(selectedAreas[currentLevel].Communes_par_score, period)[score] / selectedAreas[currentLevel].Nombre_de_communes * 100))}%` : '0%',
                   backgroundColor: getColor(parseInt(score))
                 }">
                 </div>
@@ -205,7 +205,7 @@ const fetchCommunities = async (terms) => {
 
 const getAreaQuery = (parentCode) => {
   const query = `SELECT Code_INSEE_geographique, Code_INSEE_region, Libelle, Nombre_de_communes, 
-                 Communes_par_score_new, geoJSON_regions, geoJSON_departements, 
+                 Communes_par_score, geoJSON_regions, geoJSON_departements, 
                  geoJSON_communes 
                  FROM COLLECTIVITES 
                  WHERE Code_INSEE_geographique = ?`;
@@ -220,8 +220,8 @@ const getChildrenQuery = (level, parentCode) => {
   }[level];
 
   const query = `SELECT Code_INSEE_geographique, Typologie, Libelle, 
-                 Lien_Annuaire_Service_Public, Composants_score_new, Score_new, 
-                 Score_moyen_new 
+                 Lien_Annuaire_Service_Public, Composants_score, Score, 
+                 Score_moyen 
                  FROM COLLECTIVITES ${whereClause}`;
 
   return {
@@ -249,7 +249,7 @@ const loadArea = async (level, parentCode) => {
     const attachmentId = JSON.parse(areaData[geoJSONkey])[0];
     const geoJSON = await fetchAttachment(attachmentId).then(res => res.json());
 
-    areaData.Communes_par_score_new = JSON.parse(areaData.Communes_par_score_new);
+    areaData.Communes_par_score = JSON.parse(areaData.Communes_par_score);
 
     return { ...areaData, geoJSON };
   } catch (err) {
@@ -326,15 +326,15 @@ const renderGeography = async () => {
       if (!record) return feature;
 
       const score = record.fields.Typologie === 'Commune'
-        ? JSON.parse(record.fields.Score_new)
-        : JSON.parse(record.fields.Score_moyen_new);
+        ? JSON.parse(record.fields.Score)
+        : JSON.parse(record.fields.Score_moyen);
 
       return {
         ...feature,
         properties: {
           ...feature.properties,
           score,
-          score_components: JSON.parse(record.fields.Composants_score_new || '{}'),
+          score_components: JSON.parse(record.fields.Composants_score || '{}'),
           public_service_link: record.fields.Lien_Annuaire_Service_Public
         }
       };
@@ -485,8 +485,8 @@ const handleQuickNav = async (community) => {
     if (cityRecord) {
       selectedAreas.value['city'] = {
         ...cityRecord.fields,
-        score_components: JSON.parse(cityRecord.fields.Composants_score_new || '{}'),
-        score: JSON.parse(cityRecord.fields.Score_new),
+        score_components: JSON.parse(cityRecord.fields.Composants_score || '{}'),
+        score: JSON.parse(cityRecord.fields.Score),
         CODE: cityRecord.fields.Code_INSEE_geographique,
         NOM: cityRecord.fields.Libelle,
         public_service_link: cityRecord.fields.Lien_Annuaire_Service_Public
