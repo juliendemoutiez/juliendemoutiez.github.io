@@ -1,7 +1,7 @@
 <template>
   <div :class="containerClass || 'relative'" ref="dropdown">
     <input :id="id" ref="input" type="text" v-model="query" :placeholder="placeholder" @focus="isDropdownOpen = true"
-      class="w-full" pattern="^(?!.*).*$" :disabled="disabled" />
+      @keydown="handleKeydown" class="w-full" pattern="^(?!.*).*$" :disabled="disabled" />
     <div v-if="isDropdownOpen"
       class="absolute z-10 w-full mt-1 bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
       <p v-if="!options && query === ''" class="px-4 py-2 text-slate-800 text-sm">
@@ -14,8 +14,10 @@
         Aucun résultat
       </p>
       <ul v-else-if="availableSuggestions.length">
-        <li v-for="(suggestion, index) in availableSuggestions" :key="index" @click="handleSelect(suggestion)"
-          class="px-4 py-2 hover:bg-blue-50 cursor-pointer text-slate-800 text-sm flex items-center justify-between">
+        <li v-for="(suggestion, index) in availableSuggestions" :key="index" @click="handleSelect(suggestion)" :class="[
+          'px-4 py-2 cursor-pointer text-slate-800 text-sm flex items-center justify-between',
+          selectedIndex === index ? 'bg-blue-50' : 'hover:bg-blue-50'
+        ]">
           {{ displayField ? suggestion[displayField] : suggestion }}
           <button v-if="suggestion.is_new" type="button" @click="handleSelect(suggestion)"
             class="ml-2 text-blue-500 hover:text-blue-800">
@@ -42,7 +44,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 import { debounce } from 'lodash'
 import { Loader, X, Plus } from 'lucide-vue-next';
 
@@ -111,6 +113,7 @@ const query = ref('')
 const suggestions = ref(props.options || [])
 const loading = ref(false)
 const isDropdownOpen = ref(false)
+const selectedIndex = ref(-1)
 
 // Handle outside clicks
 const handleClickOutside = (event) => {
@@ -146,10 +149,34 @@ const handleSelect = (suggestion) => {
   }
   query.value = ''
   isDropdownOpen.value = false
+  input.value.blur()
 }
 
 const handleRemove = (index) => {
   emit('update:selected', props.selected.filter((_, i) => i !== index))
+}
+
+const handleKeydown = (event) => {
+  if (!isDropdownOpen.value || !availableSuggestions.value.length) return
+
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault()
+      selectedIndex.value = (selectedIndex.value + 1) % availableSuggestions.value.length
+      break
+    case 'ArrowUp':
+      event.preventDefault()
+      selectedIndex.value = selectedIndex.value <= 0
+        ? availableSuggestions.value.length - 1
+        : selectedIndex.value - 1
+      break
+    case 'Enter':
+      event.preventDefault()
+      if (selectedIndex.value >= 0) {
+        handleSelect(availableSuggestions.value[selectedIndex.value])
+      }
+      break
+  }
 }
 
 const updateInputValidation = () => {
@@ -158,6 +185,26 @@ const updateInputValidation = () => {
     input.value.setCustomValidity(
       props.required && props.selected.length === 0 && !query.value ? props.customValidity : ''
     );
+  }
+}
+
+// Add this method after other methods
+const scrollToSelected = () => {
+  if (selectedIndex.value < 0) return
+
+  const container = dropdown.value?.querySelector('.overflow-auto')
+  const selectedElement = container?.querySelector(`li:nth-child(${selectedIndex.value + 1})`)
+
+  if (container && selectedElement) {
+    const containerHeight = container.clientHeight
+    const elementTop = selectedElement.offsetTop
+    const elementHeight = selectedElement.offsetHeight
+
+    // If element is not fully visible
+    if (elementTop < container.scrollTop ||
+      elementTop + elementHeight > container.scrollTop + containerHeight) {
+      container.scrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2)
+    }
   }
 }
 
@@ -177,6 +224,18 @@ watch(
   () => props.required,
   () => updateInputValidation()
 )
+
+watch(isDropdownOpen, (newValue) => {
+  if (!newValue) {
+    selectedIndex.value = -1
+  }
+})
+
+watch(selectedIndex, () => {
+  nextTick(() => {
+    scrollToSelected()
+  })
+})
 
 // Computed
 const availableSuggestions = computed(() => {

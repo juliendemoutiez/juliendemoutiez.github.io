@@ -1,7 +1,10 @@
 <template>
-  <div class="absolute" :class="positionClass" v-if="scale"
-    :style="{ transform: `scale(${scale})`, zIndex: 1000, width: '350px' }">
-    <slot></slot>
+  <div class="absolute z-[1000]" :class="positionClass">
+    <div class="h-[calc(100vh-2rem)] overflow-auto" style="width: 350px;">
+      <div class="flex flex-col min-h-full" :class="positionClass.includes('bottom') ? 'justify-end' : 'justify-start'">
+        <slot></slot>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -30,3 +33,5 @@ export default {
   }
 }
 </script>
+
+<!-- :style="{ transform: `scale(${scale})`, transformOrigin: 'bottom left' }" -->

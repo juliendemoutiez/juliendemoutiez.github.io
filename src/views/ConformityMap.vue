@@ -211,15 +211,15 @@ const fetchCommunities = async (terms) => {
       `${replaceAccents(nameField)} LIKE '%' || '${normalizeText(term)}' || '%'`
     ).join(' AND ');
     const query = `
-      SELECT id, ${nameField}, Typologie, Code_INSEE_geographique, Code_INSEE_region, Code_INSEE_departement
+      SELECT id, ${nameField}, Typologie, Code_INSEE_geographique, Code_INSEE_region, Code_INSEE_departement, Population
       FROM COLLECTIVITES
       WHERE ${whereConditions}
       AND (Typologie = 'Région' OR Typologie = 'Département' OR Typologie = 'Commune' OR Typologie = 'EPCI à fiscalité propre')
-      ORDER BY ${nameField}
+      ORDER BY Population DESC
       LIMIT 10
     `
     const records = await executeQuery(query)
-    return records.map(record => record.fields).sort((a, b) => a[nameField].localeCompare(b[nameField]))
+    return records.map(record => record.fields)
   } catch (error) {
     console.error('Search error:', error)
   }
