@@ -1,6 +1,6 @@
 <template>
   <Toast v-if="props.toast" :type="props.toast.type" :title="props.toast.title" :message="props.toast.message" />
-  <div class="h-full px-4 pt-10 bg-slate-100 flex flex-col items-center">
+  <div class="h-full px-4 pt-10 bg-slate-100 flex flex-col items-center overflow-auto">
     <div class="bg-white shadow-lg rounded-t-lg w-full max-w-screen-lg flex-1 h-fit">
       <form @submit="handleSubmit">
         <div class="border-b border-slate-100 p-6 flex justify-between items-center w-full">
