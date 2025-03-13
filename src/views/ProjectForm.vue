@@ -156,8 +156,8 @@ const handleSubmit = async () => {
     const outputData = {
       'Nom': formData.value.name,
       'Description': formData.value.description,
-      'Produit': formData.value.product.name,
-      'Type': formData.value.type.name,
+      'Produit': formData.value.product,
+      'Type': formData.value.type,
       'Date_de_debut': formData.value.start_date,
       'Date_de_fin': formData.value.end_date,
       'Formulaire_d_inscription': formData.value.sign_up_form_url,
