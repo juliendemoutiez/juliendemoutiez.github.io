@@ -239,6 +239,7 @@ watch(selectedIndex, () => {
 
 // Computed
 const availableSuggestions = computed(() => {
+  if (!suggestions.value) return []
   const currentSuggestions = suggestions.value
   if (props.allowNew) {
     currentSuggestions.unshift({ id: query.value, is_new: true, [props.displayField]: query.value })

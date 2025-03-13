@@ -114,8 +114,13 @@ const QUERIES = {
       contact: 'Nom_complet'
     }[type];
 
-    const whereConditions = terms.map(term =>
-      `${replaceAccents(nameField)} LIKE '%' || '${normalizeText(term)}' || '%'`
+    terms = terms.map(t => t.trim())
+      .filter(t => t !== '');
+  
+    if (terms.length === 0) return '';
+  
+    const whereConditions = terms.map(term => 
+      `${replaceAccents(nameField)} LIKE '%${normalizeText(term)}%'`
     ).join(' AND ');
 
     return `

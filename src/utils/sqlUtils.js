@@ -1,25 +1,28 @@
-export const replaceAccents = (
-  str,
-) => `REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+export const replaceAccents = (str) => `LOWER(REPLACE(REPLACE(REPLACE(REPLACE(
   REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-  LOWER(${str}),
+  REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+  ${str},
   'é', 'e'),
   'è', 'e'),
   'ê', 'e'),
   'ë', 'e'),
-  'à', 'a'),
-  'á', 'a'),
   'â', 'a'),
   'ä', 'a'),
-  'ç', 'c'),
   'î', 'i'),
   'ï', 'i'),
-  'ô', 'o'),
   'ö', 'o'),
-  'ù', 'u'),
   'û', 'u'),
   'ü', 'u'),
-  'ÿ', 'y'),
-  'ñ', 'n'),
+  'É', 'E'),
+  'È', 'E'),
+  'Ê', 'E'),
+  'Ë', 'E'),
+  'Â', 'A'),
+  'Ä', 'A'),
+  'Î', 'I'),
+  'Ï', 'I'),
+  'Ö', 'O'),
+  'Û', 'U'),
+  'Ü', 'U'),
   '-', ''),
-  '''', '')`
+  '''', ''))`
