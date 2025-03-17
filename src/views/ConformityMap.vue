@@ -293,7 +293,8 @@ const processGeoJSON = (geoJSON, childrenAreas) => {
 }
 
 const processGeoJSONEPCI = (geoJSON) => {
-  const groupedFeatures = d3.group(geoJSON.features, d => d.properties.CODE_INSEE_EPCI);
+  const features = geoJSON.features.map(f => JSON.parse(JSON.stringify(f)));
+  const groupedFeatures = d3.group(features, d => d.properties.CODE_INSEE_EPCI);
   const processedGeoJSONFeatures = Array.from(groupedFeatures, ([epciCode, features]) => {
     let merged;
     if (features.length === 1) {
