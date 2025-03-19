@@ -1,7 +1,7 @@
 <template>
   <div class="h-full w-full relative" ref="mapContainer"></div>
   <BaseLegend :scale="legendScale" position="top-right">
-    <div class="bg-white p-4 rounded-xl shadow-lg relative">
+    <div class="bg-white p-4 rounded-xl shadow-lg relative pointer-events-auto">
       <p class="text-slate-800 mb-2 text-base font-medium">Rechercher une collectivité</p>
       <MultiselectDropdown id="quicknav" :fetchSuggestions="fetchCommunities" v-model:selected="selectedCommunity"
         displayField="Libelle_complet" placeholder="Région, département ou commune" :required="false"
@@ -9,7 +9,7 @@
     </div>
   </BaseLegend>
   <BaseLegend :scale="legendScale" position="bottom-left">
-    <div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="bg-white rounded-xl shadow-lg p-6 pointer-events-auto">
       <div v-if="selectedAreas[currentLevel]">
         <div v-if="Object.values(selectedAreas).length > 1" class="flex items-center mb-2">
           <a v-if="currentLevel === 'region'" @click="getBackLevel('country', '00')" class="cursor-pointer">
@@ -84,7 +84,7 @@
       </div>
     </div>
 
-    <div class="mt-4 bg-white rounded-xl p-6 text-slate-500 hover:text-slate-800"
+    <div class="mt-4 bg-white rounded-xl p-6 text-slate-500 hover:text-slate-800 pointer-events-auto"
       v-if="currentLevel == 'department' || currentLevel == 'epci'">
       <div v-if="selectedAreas['city']">
         <p class="font-bold text-2xl text-slate-800 mb-2">{{ selectedAreas['city'].Libelle }}</p>
@@ -133,7 +133,7 @@
         <p class="text-slate-500">Cliquez sur une commune pour afficher les détails</p>
       </div>
     </div>
-    <div class="mt-4 bg-white rounded-xl shadow-lg p-6 text-slate-500 hover:text-slate-800">
+    <div class="mt-4 bg-white rounded-xl shadow-lg p-6 text-slate-500 hover:text-slate-800 pointer-events-auto">
       <div class="flex flex-row items-center justify-between mb-4">
         <p class="font-medium text-base text-slate-800 mr-2">Données</p>
         <select v-model="period" class="bg-slate-100 rounded-md p-2 text-slate-800 px-2">

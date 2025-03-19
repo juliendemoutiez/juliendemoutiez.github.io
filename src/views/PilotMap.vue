@@ -1,7 +1,7 @@
 <template>
   <div class="h-full w-full relative" ref="mapContainer"></div>
   <BaseLegend :scale="legendScale" position="bottom-right">
-    <div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="bg-white rounded-xl shadow-lg p-6 pointer-events-auto">
       <p class="font-bold text-2xl text-slate-800 mb-4">Groupe pilote</p>
       <div class="space-y-2">
         <div class="flex flex-row items-center">

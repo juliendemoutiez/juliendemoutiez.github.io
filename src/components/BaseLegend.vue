@@ -1,5 +1,5 @@
 <template>
-  <div class="absolute z-[1000]" :class="positionClass">
+  <div class="absolute z-[1000] pointer-events-none" :class="positionClass">
     <div class="h-[calc(100vh-2rem)] overflow-auto" style="width: 350px;">
       <div class="flex flex-col min-h-full" :class="positionClass.includes('bottom') ? 'justify-end' : 'justify-start'">
         <slot></slot>
