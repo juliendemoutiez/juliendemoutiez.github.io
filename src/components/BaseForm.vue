@@ -1,11 +1,13 @@
 <template>
   <Toast v-if="props.toast" :type="props.toast.type" :title="props.toast.title" :message="props.toast.message" />
-  <div class="h-full px-4 pt-10 bg-slate-100 flex flex-col items-center overflow-auto">
-    <div class="bg-white shadow-lg rounded-t-lg w-full max-w-screen-lg flex-1 h-fit">
+  <div class="h-full sm:px-4 sm:pt-10 bg-slate-100 flex flex-col items-center overflow-auto">
+    <div class="bg-white shadow-lg sm:rounded-t-lg w-full max-w-screen-lg flex-1 h-fit relative">
       <form @submit="handleSubmit">
-        <div class="border-b border-slate-100 p-6 flex justify-between items-center w-full">
+        <div
+          class="border-b border-slate-100 p-6 flex justify-between items-center w-full sticky sm:relative top-0 z-10 bg-white">
           <div class="flex flex-row space-x-4 items-center">
-            <div class="flex justify-center items-center bg-slate-100 rounded-xl" style="width: 50px; height: 50px;">
+            <div class="flex justify-center items-center bg-slate-100 rounded-xl flex-shrink-0"
+              style="width: 50px; height: 50px;">
               <p class="text-xl">{{ props.icon }}</p>
             </div>
             <div>

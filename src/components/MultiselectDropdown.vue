@@ -27,7 +27,7 @@
       </ul>
     </div>
 
-    <div class="mt-2 flex flex-wrap gap-2" v-if="selected.length > 0">
+    <div class="mt-2 flex flex-wrap gap-2" v-if="selected.length > 0 && showSelection">
       <slot name="selected-item" v-for="(item, index) in selected" :key="item.id" :item="item" :index="index"
         :remove="handleRemove">
         <div
@@ -100,6 +100,10 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  showSelection: {
+    type: Boolean,
+    default: true
   }
 })
 

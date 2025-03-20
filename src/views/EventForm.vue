@@ -125,14 +125,26 @@
             </div>
           </div>
         </div>
+        <div class="border-t py-8">
+          <p class="text-slate-500 mb-4">Pour sélectionner un autre événement, cliquez sur le bouton ci-dessous.
+          </p>
+          <button
+            class="inline-flex items-center px-4 py-2 bg-slate-200 border border-transparent rounded-md font-semibold text-slate-800 hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            @click="showProjectSelectionModal = true" type="button">
+            <Repeat2 class="w-4 h-4 mr-2" />
+            Changer d'événement
+          </button>
+        </div>
       </div>
     </template>
   </BaseForm>
+  <ProjectSelectionModal :show="showProjectSelectionModal" @close="showProjectSelectionModal = false"
+    :fetchProjects="fetchProjects" @update:selected="currentProject = $event" />
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { CheckCircle, X } from 'lucide-vue-next'
+import { ref, computed, onMounted, watch } from 'vue'
+import { CheckCircle, X, Repeat2 } from 'lucide-vue-next'
 import { debounce } from 'lodash'
 
 import { useGrist } from '@/composables/useGrist'
@@ -140,7 +152,7 @@ import { useToast } from '@/composables/useToast'
 import BaseForm from '@/components/BaseForm.vue'
 import Alert from '@/components/Alert.vue'
 import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
-
+import ProjectSelectionModal from '@/components/ProjectSelectionModal.vue'
 import {
   PHONE_INDICATORS,
   PHONE_PATTERNS,
@@ -164,15 +176,29 @@ const QUERIES = {
     `
   },
   suggestions: (type, terms) => {
-    const tableName = type === 'community' ? 'COLLECTIVITES' : 'ORGANISATIONS'
-    const nameField = type === 'community' ? 'Libelle_et_departement' : 'Nom_sigle'
-
-    const whereConditions = terms.map(term =>
+    const tableName = {
+      community: 'COLLECTIVITES',
+      organisation: 'ORGANISATIONS',
+      project: 'PROJETS'
+    }[type]
+    const nameField = {
+      community: 'Libelle_et_departement',
+      organisation: 'Nom_sigle',
+      project: 'Nom_Complet'
+    }[type]
+    let whereConditions = terms.map(term =>
       `${replaceAccents(nameField)} LIKE '%' || '${normalizeText(term)}' || '%'`
     ).join(' AND ');
 
+    let additionalFields = ''
+
+    if (type === 'project') {
+      whereConditions = whereConditions + ' AND Type = "📅 Evénement"'
+      additionalFields = ['Date_de_debut', 'Date_de_fin']
+    }
+
     return `
-      SELECT id, ${nameField}
+      SELECT id, ${[nameField, ...additionalFields].join(', ')}
       FROM ${tableName}
       WHERE ${whereConditions}
       ORDER BY ${nameField}
@@ -197,7 +223,7 @@ const formOptions = ref({
   ]
 })
 const currentUser = ref(null)
-
+const showProjectSelectionModal = ref(false)
 // Initialise composables
 const { executeQuery, executeGetRequest, initializeGrist, createRecords } = useGrist()
 const { toast, showSuccess, showError } = useToast()
@@ -323,7 +349,11 @@ const fetchSuggestions = (type) => {
   return async (query) => {
     try {
       const records = await executeQuery(QUERIES.suggestions(type, query))
-      const sortKey = type === 'community' ? 'Libelle_et_departement' : 'Nom_sigle'
+      const sortKey = {
+        community: 'Libelle_et_departement',
+        organisation: 'Nom_sigle',
+        project: 'Nom_Complet'
+      }[type]
       return records.map(record => record.fields).sort((a, b) => a[sortKey].localeCompare(b[sortKey]))
     } catch (error) {
       console.error('Search error:', error)
@@ -356,6 +386,10 @@ const getCurrentUser = async () => {
     currentUser.value = null
     console.error('Current user error:', error)
   }
+}
+
+const getCurrentProject = async () => {
+  currentProject.value = JSON.parse(localStorage.getItem('eventFormProject'))
 }
 
 const createOrganisations = async (newOrganisationNames = []) => {
@@ -422,6 +456,7 @@ const createInteraction = async (contactId) => {
   await createRecords('INTERACTIONS', [{ fields: outputData }])
 }
 
+const fetchProjects = fetchSuggestions('project')
 const fetchCommunities = fetchSuggestions('community')
 const fetchOrganisations = fetchSuggestions('organisation')
 const debouncedFetchExistingContact = debounce(fetchExistingContact, 500)
@@ -439,12 +474,21 @@ const existingContactAlert = computed(() => {
 onMounted(async () => {
   try {
     await initializeGrist()
-    currentProject.value = JSON.parse(localStorage.getItem('eventFormProject'))
     await retrieveFormOptions();
     await getCurrentUser();
-    await initForm()
+    await getCurrentProject();
+    if (!currentProject.value) {
+      showProjectSelectionModal.value = true
+    }
   } catch (err) {
     console.error('Initialization error:', err)
+  }
+})
+
+watch(currentProject, (newVal) => {
+  if (newVal) {
+    localStorage.setItem('eventFormProject', JSON.stringify(newVal))
+    initForm()
   }
 })
 
