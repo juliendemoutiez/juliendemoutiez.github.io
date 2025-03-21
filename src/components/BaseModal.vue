@@ -1,9 +1,10 @@
 <template>
   <Teleport to="body">
     <Transition name="modal-fade">
-      <div v-if="show" class="fixed inset-0 z-[1000] w-full h-full bg-black/70 flex justify-center items-center"
+      <div v-if="show" class="fixed inset-0 z-[1000] w-full h-full bg-black/70 flex justify-center items-center p-2"
         @click="emit('close')">
-        <div class="relative flex flex-1 bg-white rounded-2xl p-6 w-full max-h-[90vh] overflow-y-auto flex-col max-w-xl"
+        <div
+          class="relative flex flex-1 bg-white rounded-2xl p-6 w-full h-full sm:max-h-[90vh] overflow-y-auto flex-col max-w-xl sm:max-h-96"
           @click.stop>
           <div>
             <div class="flex flex-1 justify-between items-center mb-6">

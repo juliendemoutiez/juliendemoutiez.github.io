@@ -126,11 +126,11 @@
           </div>
         </div>
         <div class="border-t py-8">
-          <p class="text-slate-800 font-semibold mb-2">Événement sélectionné: {{ currentProject.name }}</p>
-          <p class="text-slate-500 mb-4">Pour sélectionner un autre événement, cliquez sur le bouton ci-dessous.
+          <p class="text-sm text-slate-800 font-semibold mb-2">Événement sélectionné: {{ currentProject.name }}</p>
+          <p class="text-sm text-slate-500 mb-4">Pour sélectionner un autre événement, cliquez sur le bouton ci-dessous.
           </p>
           <button
-            class="inline-flex items-center px-4 py-2 bg-slate-200 border border-transparent rounded-md font-semibold text-slate-800 hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            class="text-sm sm:text-base inline-flex items-center px-4 py-2 bg-slate-200 border border-transparent rounded-md font-semibold text-slate-800 hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             @click="showProjectSelectionModal = true" type="button">
             <Repeat2 class="w-4 h-4 mr-2" />
             Changer d'événement
