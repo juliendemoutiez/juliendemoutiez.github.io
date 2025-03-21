@@ -36,7 +36,7 @@
                     :disabled="existingContact">
                     <option v-for="(indicator, index) of PHONE_INDICATORS" :key="index" :value="indicator.value">{{
                       indicator.value
-                    }}</option>
+                      }}</option>
                   </select>
                   <input v-model="formData.phone" type="tel"
                     :pattern="formData.phone_indicator.length === 3 ? PHONE_PATTERNS.metropolitan.pattern : PHONE_PATTERNS.overseas.pattern"
@@ -126,6 +126,7 @@
           </div>
         </div>
         <div class="border-t py-8">
+          <p class="text-slate-800 font-semibold mb-2">Événement sélectionné: {{ currentProject.name }}</p>
           <p class="text-slate-500 mb-4">Pour sélectionner un autre événement, cliquez sur le bouton ci-dessous.
           </p>
           <button

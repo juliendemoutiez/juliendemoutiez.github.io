@@ -4,13 +4,12 @@
     <div class="bg-white shadow-lg sm:rounded-t-lg w-full max-w-screen-lg flex-1 h-fit relative">
       <form @submit="handleSubmit">
         <div
-          class="border-b border-slate-100 p-6 flex justify-between items-center w-full sticky sm:relative top-0 z-10 bg-white">
+          class="border-b border-slate-100 p-4 sm:p-6 flex justify-between items-center w-full sticky sm:relative top-0 z-10 bg-white">
           <div class="flex flex-row space-x-4 items-center">
-            <div class="flex justify-center items-center bg-slate-100 rounded-xl flex-shrink-0"
-              style="width: 50px; height: 50px;">
+            <div class="justify-center items-center bg-slate-100 rounded-xl flex-shrink-0 w-12 h-12 hidden sm:flex">
               <p class="text-xl">{{ props.icon }}</p>
             </div>
-            <div>
+            <div class="hidden sm:block">
               <h2 class="text-2xl font-bold text-slate-800">{{ props.title }}</h2>
               <p class="text-slate-500">{{ props.subtitle }}</p>
             </div>
