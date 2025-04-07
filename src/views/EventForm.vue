@@ -36,7 +36,7 @@
                     :disabled="existingContact">
                     <option v-for="(indicator, index) of PHONE_INDICATORS" :key="index" :value="indicator.value">{{
                       indicator.value
-                      }}</option>
+                    }}</option>
                   </select>
                   <input v-model="formData.phone" type="tel"
                     :pattern="formData.phone_indicator.length === 3 ? PHONE_PATTERNS.metropolitan.pattern : PHONE_PATTERNS.overseas.pattern"
@@ -122,6 +122,13 @@
                 <label class="form-label" for="notes">Notes</label>
                 <textarea class="h-24" id="notes" v-model="formData.notes" placeholder="Notes" />
               </div>
+            </div>
+            <div class="flex justify-end pt-4 sm:hidden">
+              <button type="submit"
+                class="text-sm sm:text-base inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                :disabled="isSubmitting">
+                Enregistrer
+              </button>
             </div>
           </div>
         </div>
