@@ -6,6 +6,7 @@ import OrganisationForm from '@/views/OrganisationForm.vue'
 import ProjectForm from '@/views/ProjectForm.vue'
 import InteractionForm from '@/views/InteractionForm.vue'
 import EventForm from '@/views/EventForm.vue'
+import ConformityMapRedirect from '@/views/ConformityMapRedirect.vue'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -44,6 +45,11 @@ const router = createRouter({
       path: '/event-form',
       name: 'event-form',
       component: EventForm,
+    },
+    {
+      path: '/conformity-map-redirect',
+      name: 'conformity-map-redirect',
+      component: ConformityMapRedirect,
     },
   ],
 })
