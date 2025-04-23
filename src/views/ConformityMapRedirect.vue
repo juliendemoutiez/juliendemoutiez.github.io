@@ -7,7 +7,7 @@
         déplacée sur le site de
         la Suite Territoriale.</p>
       <div class="flex justify-end">
-        <a href="https://suiteterritoriale.anct.gouv.fr/conformité/cartograpgie" target="_blank">
+        <a href="https://suiteterritoriale.anct.gouv.fr/conformite/cartographie" target="_blank">
           <button class="p-4 bg-blue-700 text-white">Voir la carte <span class="btn-arrow">→</span></button>
         </a>
       </div>
