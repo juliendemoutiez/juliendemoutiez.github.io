@@ -53,3 +53,8 @@ select {
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
+
+input[type='checkbox'] {
+  width: 1.25rem;
+  height: 1.25rem;
+}

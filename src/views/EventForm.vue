@@ -118,6 +118,12 @@
                   </template>
                 </MultiselectDropdown>
               </div>
+              <div class="col-span-1 sm:col-span-2 mt-1">
+                <label class="form-label flex items-center gap-2" for="subscribe_newsletter">
+                  <input type="checkbox" id="subscribe_newsletter" v-model="formData.subscribe_newsletter" />
+                  Souhaite être ajouté à la newsletter
+                </label>
+              </div>
               <div class="col-span-1 sm:col-span-2">
                 <label class="form-label" for="notes">Notes</label>
                 <textarea class="h-24" id="notes" v-model="formData.notes" placeholder="Notes" />
@@ -449,6 +455,7 @@ const createInteraction = async (contactId) => {
         return `- ${product.name} - ${product.already_used ? 'Déjà utilisé' : 'Pas encore utilisé'}`
       })
     ].join('\n') : '',
+    formData.value.subscribe_newsletter ? '💌 Souhaite être ajouté à la newsletter' : false,
     formData.value.notes
   ].filter(Boolean).join('\n\n')
   const outputData = {
